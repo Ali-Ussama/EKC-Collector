@@ -145,7 +145,7 @@ public class EditInFeatureFragment extends Fragment {
                 editorActivity = ((MapEditorActivity) context);
 
                 if (editorActivity.shapeToAdd[0].getGeometry() instanceof Point) {
-                    featureLayer = editorActivity.FCL_DISTRIBUTIONBOX;
+                    featureLayer = editorActivity.selectedLayer;
                     featureLayerOffline = editorActivity.featureLayerPointsOffline;
                     shapeType = MapEditorActivity.POINT;
                 } else if (editorActivity.shapeToAdd[0].getGeometry() instanceof Polyline) {
@@ -470,18 +470,18 @@ public class EditInFeatureFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_edit_in_feature, container, false);
 
+        try {
+            listAdapter.setFeatureSet(attributes);
 
-        listAdapter.setFeatureSet(attributes);
 
-
-        LinearLayout listView = (LinearLayout) view.findViewById(R.id.list_view);
-        lnAttachments = (LinearLayout) view.findViewById(R.id.lnAttachments);
-        hsAttachments = (HorizontalScrollView) view.findViewById(R.id.hsAttachments);
-        scrollAttributes = (ScrollView) view.findViewById(R.id.scrollAttributes);
-        tvAttachment = (TextView) view.findViewById(R.id.tvAttachment);
-        mCodeEt = view.findViewById(R.id.mCodeEt);
-        mDeviceNumEt = view.findViewById(R.id.device_num);
-        mGeneratedCodeEt = view.findViewById(R.id.generated_code);
+            LinearLayout listView = (LinearLayout) view.findViewById(R.id.list_view);
+            lnAttachments = (LinearLayout) view.findViewById(R.id.lnAttachments);
+            hsAttachments = (HorizontalScrollView) view.findViewById(R.id.hsAttachments);
+            scrollAttributes = (ScrollView) view.findViewById(R.id.scrollAttributes);
+            tvAttachment = (TextView) view.findViewById(R.id.tvAttachment);
+            mCodeEt = view.findViewById(R.id.mCodeEt);
+            mDeviceNumEt = view.findViewById(R.id.device_num);
+            mGeneratedCodeEt = view.findViewById(R.id.generated_code);
 
 //        boolean focused = false;
 //
@@ -503,13 +503,27 @@ public class EditInFeatureFragment extends Fragment {
 //            }
 //        }
 
-        if (attachmentInfo == null || attachmentInfo.length == 0) {
-            tvAttachment.setText(R.string.no_attachment);
-            hsAttachments.setVisibility(View.GONE);
-        } else {
-            for (AttachmentInfo anAttachmentInfo : attachmentInfo) {
-                addAttachmentFileToView(anAttachmentInfo.getName(), (int) anAttachmentInfo.getId(), null, false);
+            if (attachmentInfo == null || attachmentInfo.length == 0) {
+                tvAttachment.setText(R.string.no_attachment);
+                hsAttachments.setVisibility(View.GONE);
+            } else {
+                for (AttachmentInfo anAttachmentInfo : attachmentInfo) {
+                    addAttachmentFileToView(anAttachmentInfo.getName(), (int) anAttachmentInfo.getId(), null, false);
+                }
             }
+
+            if (attributes != null && !attributes.isEmpty()) {
+                Log.i(TAG, "onCreate(): attributes not null");
+                if (attributes.get(ColumnNames.Code) != null)
+                    mCodeEt.setText(attributes.get(ColumnNames.Code).toString());
+                if (attributes.get(ColumnNames.Device_No) != null)
+                    mDeviceNumEt.setText(attributes.get(ColumnNames.Device_No).toString());
+            } else {
+                Log.i(TAG, "onCreate(): attributes are null");
+                Log.i(TAG, "onCreate(): ");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return view;
     }
