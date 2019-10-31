@@ -3056,9 +3056,12 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //                FCL_DISTRIBUTIONBOX.queryAttachmentInfos(objId, attachmentCallbackOnline);
                 if (selectedLayer != null) {
                     if (selectedLayer.equals(FCL_DISTRIBUTIONBOX)) {
+                        selectedLayer = FCL_DISTRIBUTIONBOX;
+
                         FCL_DISTRIBUTIONBOX.queryAttachmentInfos(objId, attachmentCallbackOnline);
 
                     } else if (selectedLayer.equals(FCL_POLES)) {
+
                         FCL_POLES.queryAttachmentInfos(objId, attachmentCallbackOnline);
 
                     } else if (selectedLayer.equals(FCL_RMU)) {

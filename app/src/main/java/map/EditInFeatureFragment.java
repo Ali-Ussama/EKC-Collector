@@ -90,6 +90,7 @@ public class EditInFeatureFragment extends Fragment {
     private static final String FEATURE_ID = "FeatureId";
     private static final String TAG = "EditInFeatureFragment";
     public static String TEMP_PHOTO_FILE_NAME;
+    public final String IMAGE_FOLDER_NAME = "EKC_Collector";
     public static AttributeViewsBuilder listAdapter;
     ArcGISFeatureLayer featureLayer;
     MapEditorActivity editorActivity;
@@ -380,7 +381,7 @@ public class EditInFeatureFragment extends Fragment {
 
     private void recordVideo() {
         try {
-            createFile("Video", MP4);
+            createFile("Video", "", MP4);
             Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
             Uri contentUri = FileProvider.getUriForFile(getContext(), getString(R.string.app_package_name), mFileTemp);
             takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
@@ -394,30 +395,123 @@ public class EditInFeatureFragment extends Fragment {
 
     private void takePicture() {
         try {
-            createFile("Image", JPG);
+
+            String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
+            String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+            createFile(pointName, pointFolderName, JPG);
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            Uri photoURI = FileProvider.getUriForFile(getContext(), getString(R.string.app_package_name), mFileTemp);
+            Uri photoURI = FileProvider.getUriForFile(editorActivity, getString(R.string.app_package_name), mFileTemp);
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-            startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_PICTURE);
+            editorActivity.startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_PICTURE);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void openGallery() {
-        createFile("Image", JPG);
+        createFile("Image", "", JPG);
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, REQUEST_CODE_GALLERY);
     }
 
 
-    private void createFile(String name, String extension) {
-        Date d = new Date();
-        TEMP_PHOTO_FILE_NAME = name + "_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + "." + extension;
-        mFileTemp = new File(editorActivity.getExternalCacheDir(), TEMP_PHOTO_FILE_NAME);
-        Log.d(name, TEMP_PHOTO_FILE_NAME);
-        Log.d("file createFile", mFileTemp.toString());
+    private void createFile(String name, String layerFolderName, String extension) {
+        try {
+            Date d = new Date();
+            TEMP_PHOTO_FILE_NAME = "Image_" + new SimpleDateFormat("dd_MM_yyyy", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension;
+
+
+            File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DCIM), IMAGE_FOLDER_NAME);
+
+            if (!mediaStorageDir.exists()) {
+                if (mediaStorageDir.mkdir()) {
+                    Log.i(TAG, "createFile(): mediaStorageDir director is created = " + mediaStorageDir.toString());
+
+                    File layerFolder = new File(mediaStorageDir.getPath(), layerFolderName);
+
+                    if (!layerFolder.exists()) {
+                        if (layerFolder.mkdir()) {
+                            Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                            File pointFolder = new File(layerFolder.getPath(), name);
+                            if (!pointFolder.exists()) {
+                                if (pointFolder.mkdir()) {
+
+                                    mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                            "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+
+                                    Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                } else {
+                                    Log.i(TAG, "createFile(): pointFolder director not created");
+
+                                }
+                            }
+                        } else {
+                            Log.i(TAG, "createFile(): layerFolder directory not created");
+                        }
+                    }
+                } else {
+                    Log.i(TAG, "createFile(): mediaStorageDir director not created");
+                }
+            } else {
+                Log.i(TAG, "createFile(): mediaStorageDir director is created = " + mediaStorageDir.toString());
+
+                File layerFolder = new File(mediaStorageDir.getPath(), layerFolderName);
+
+                if (!layerFolder.exists()) {
+                    if (layerFolder.mkdir()) {
+                        Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                        File pointFolder = new File(layerFolder.getPath(), name);
+                        if (!pointFolder.exists()) {
+                            if (pointFolder.mkdir()) {
+
+                                mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                        "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+
+                                Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                            } else {
+                                Log.i(TAG, "createFile(): pointFolder director not created");
+
+                            }
+                        }
+                    } else {
+                        Log.i(TAG, "createFile(): layerFolder directory not created");
+                    }
+                }else{
+                    Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                    File pointFolder = new File(layerFolder.getPath(), name);
+                    if (!pointFolder.exists()) {
+                        if (pointFolder.mkdir()) {
+
+                            mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                    "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+
+                            Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                        } else {
+                            Log.i(TAG, "createFile(): pointFolder director not created");
+
+                        }
+                    }else{
+                        mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+
+                        Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                    }
+                }
+                Log.i(TAG, "createFile(): mediaStorageDir director exists");
+            }
+
+            // rename image...
+
+
+            Log.i(TAG, "file createFile " + mFileTemp.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //    private void startCropImage() {
@@ -892,8 +986,7 @@ public class EditInFeatureFragment extends Fragment {
         }
     }
 
-    public static Bitmap decodeScaledBitmapFromSdCard(String filePath,
-                                                      int reqWidth, int reqHeight) {
+    public static Bitmap decodeScaledBitmapFromSdCard(String filePath, int reqWidth, int reqHeight) {
 
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
@@ -908,8 +1001,7 @@ public class EditInFeatureFragment extends Fragment {
         return BitmapFactory.decodeFile(filePath, options);
     }
 
-    public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -1222,7 +1314,7 @@ public class EditInFeatureFragment extends Fragment {
 
     private void saveFileToStorage(File mFileTemp) {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            File folder = new File(Environment.getExternalStorageDirectory(), "GCS App");
+            File folder = new File(Environment.getExternalStorageDirectory(), "/EKC Collector/");
             folder.mkdir();
             //TODO Move mFileTemp to this Folder
         }
@@ -1296,7 +1388,7 @@ public class EditInFeatureFragment extends Fragment {
         MediaPlayer ring = MediaPlayer.create(getActivity().getApplicationContext(), R.raw.starting_record);
         ring.start();
 
-        createFile("Audio", "mp4");
+        createFile("Audio", "", "mp4");
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
