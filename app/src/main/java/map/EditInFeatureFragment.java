@@ -18,12 +18,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,6 +38,13 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
 
 import com.esri.android.map.AttachmentManager;
 import com.esri.android.map.FeatureLayer;
@@ -69,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 
 import activities.MapEditorActivity;
 import activities.VideoActivity;
@@ -90,7 +93,7 @@ public class EditInFeatureFragment extends Fragment {
     private static final String FEATURE_ID = "FeatureId";
     private static final String TAG = "EditInFeatureFragment";
     public static String TEMP_PHOTO_FILE_NAME;
-    public final String IMAGE_FOLDER_NAME = "EKC_Collector";
+    public final String IMAGE_FOLDER_NAME = "AJC_Collector";
     public static AttributeViewsBuilder listAdapter;
     ArcGISFeatureLayer featureLayer;
     MapEditorActivity editorActivity;
@@ -176,6 +179,10 @@ public class EditInFeatureFragment extends Fragment {
         Log.i("test", "On Attach");
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
 
     private Field[] getFields(Field[] layerFields) {
         if (shapeType.equals(MapEditorActivity.POINT)) {
@@ -255,7 +262,7 @@ public class EditInFeatureFragment extends Fragment {
 //                editorActivity.menuItemIndex.setVisible(false);
 //            editorActivity.menuItemGCS.setVisible(false);
                 editorActivity.menuItemSatellite.setVisible(false);
-                editorActivity.menuItemBaseMap.setVisible(false);
+//                editorActivity.menuItemBaseMap.setVisible(false);
             }
 
             if (!shapeType.equals(MapEditorActivity.POINT)) {
@@ -333,7 +340,7 @@ public class EditInFeatureFragment extends Fragment {
             editorActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Objects.requireNonNull(getActivity()));
                     LayoutInflater inflater = getActivity().getLayoutInflater();
                     View view = inflater.inflate(R.layout.dialog_record_audio, null);
                     ImageView icRecordAudio = (ImageView) view.findViewById(R.id.icRecordAudio);
@@ -381,7 +388,11 @@ public class EditInFeatureFragment extends Fragment {
 
     private void recordVideo() {
         try {
-            createFile("Video", "", MP4);
+
+            String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
+            String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+
+            createFile(pointName, pointFolderName, MP4);
             Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
             Uri contentUri = FileProvider.getUriForFile(getContext(), getString(R.string.app_package_name), mFileTemp);
             takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
@@ -403,13 +414,19 @@ public class EditInFeatureFragment extends Fragment {
             Uri photoURI = FileProvider.getUriForFile(editorActivity, getString(R.string.app_package_name), mFileTemp);
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
             editorActivity.startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_PICTURE);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void openGallery() {
-        createFile("Image", "", JPG);
+
+        String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
+        String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+
+        createFile(pointName, pointFolderName, JPG);
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, REQUEST_CODE_GALLERY);
@@ -440,12 +457,11 @@ public class EditInFeatureFragment extends Fragment {
                                 if (pointFolder.mkdir()) {
 
                                     mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                            "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+                                            "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
 
                                     Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
                                 } else {
                                     Log.i(TAG, "createFile(): pointFolder director not created");
-
                                 }
                             }
                         } else {
@@ -469,7 +485,7 @@ public class EditInFeatureFragment extends Fragment {
                             if (pointFolder.mkdir()) {
 
                                 mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                        "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+                                        "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
 
                                 Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
                             } else {
@@ -480,7 +496,7 @@ public class EditInFeatureFragment extends Fragment {
                     } else {
                         Log.i(TAG, "createFile(): layerFolder directory not created");
                     }
-                }else{
+                } else {
                     Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
 
                     File pointFolder = new File(layerFolder.getPath(), name);
@@ -488,16 +504,16 @@ public class EditInFeatureFragment extends Fragment {
                         if (pointFolder.mkdir()) {
 
                             mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                    "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+                                    "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
 
                             Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
                         } else {
                             Log.i(TAG, "createFile(): pointFolder director not created");
 
                         }
-                    }else{
+                    } else {
                         mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + ".png".trim());
+                                "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
 
                         Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
                     }
@@ -575,8 +591,8 @@ public class EditInFeatureFragment extends Fragment {
             tvAttachment = (TextView) view.findViewById(R.id.tvAttachment);
             mCodeEt = view.findViewById(R.id.mCodeEt);
             mDeviceNumEt = view.findViewById(R.id.device_num);
-            mGeneratedCodeEt = view.findViewById(R.id.generated_code);
-
+//            mGeneratedCodeEt = view.findViewById(R.id.generated_code);
+//
 //        boolean focused = false;
 //
 //
@@ -597,14 +613,14 @@ public class EditInFeatureFragment extends Fragment {
 //            }
 //        }
 
-            if (attachmentInfo == null || attachmentInfo.length == 0) {
-                tvAttachment.setText(R.string.no_attachment);
-                hsAttachments.setVisibility(View.GONE);
-            } else {
-                for (AttachmentInfo anAttachmentInfo : attachmentInfo) {
-                    addAttachmentFileToView(anAttachmentInfo.getName(), (int) anAttachmentInfo.getId(), null, false);
-                }
-            }
+//            if (attachmentInfo == null || attachmentInfo.length == 0) {
+            tvAttachment.setText(R.string.no_attachment);
+            hsAttachments.setVisibility(View.GONE);
+//            } else {
+//                for (AttachmentInfo anAttachmentInfo : attachmentInfo) {
+//                    addAttachmentFileToView(anAttachmentInfo.getName(), (int) anAttachmentInfo.getId(), null, false);
+//                }
+//            }
 
             if (attributes != null && !attributes.isEmpty()) {
                 Log.i(TAG, "onCreate(): attributes not null");
@@ -779,17 +795,21 @@ public class EditInFeatureFragment extends Fragment {
     }
 
     public void saveChanges(AttributeViewsBuilder listAdapter) {
-        if (mListener != null) {
+        try {
+            if (mListener != null) {
 
-            if (mCodeEt.getText() == null || mCodeEt.getText().toString().trim().isEmpty()) {
-                mCodeEt.setError("مطلوب");
-            } else if (mDeviceNumEt.getText() == null || mDeviceNumEt.getText().toString().trim().isEmpty()) {
-                mDeviceNumEt.setError("مطلوب");
-            } else if (mGeneratedCodeEt.getText() == null || mGeneratedCodeEt.getText().toString().trim().isEmpty()) {
+                if (mCodeEt.getText() == null || mCodeEt.getText().toString().trim().isEmpty()) {
+                    mCodeEt.setError("مطلوب");
+                } else if (mDeviceNumEt.getText() == null || mDeviceNumEt.getText().toString().trim().isEmpty()) {
+                    mDeviceNumEt.setError("مطلوب");
+                } /*else if (mGeneratedCodeEt.getText() == null || mGeneratedCodeEt.getText().toString().trim().isEmpty()) {
                 mGeneratedCodeEt.setError("مطلوب");
-            } else {
-                mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), mGeneratedCodeEt.getText().toString().trim());
+            } */ else {
+                    mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), "");
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -1103,6 +1123,7 @@ public class EditInFeatureFragment extends Fragment {
 
                     @Override
                     public void onError(final Throwable e) {
+                        e.printStackTrace();
                         Log.d("Attachment", "Error In Add Attachments ");
                         if (editorActivity != null) {
 
@@ -1110,7 +1131,7 @@ public class EditInFeatureFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     Utilities.dismissLoadingDialog();
-                                    Utilities.showToast(editorActivity, e.toString());
+//                                    Utilities.showToast(editorActivity, e.toString());
                                     Utilities.showToast(editorActivity, getString(R.string.connection_failed));
                                 }
                             });
@@ -1194,6 +1215,7 @@ public class EditInFeatureFragment extends Fragment {
 
                     @Override
                     public void onError(final Throwable e) {
+                        e.printStackTrace();
                         Log.d("Attachment", "Error In delete Attachments ");
                         if (editorActivity != null) {
 
@@ -1201,7 +1223,7 @@ public class EditInFeatureFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     Utilities.dismissLoadingDialog();
-                                    Utilities.showToast(editorActivity, e.toString());
+//                                    Utilities.showToast(editorActivity, e.toString());
                                     Utilities.showToast(editorActivity, getString(R.string.connection_failed));
                                 }
                             });
@@ -1227,6 +1249,7 @@ public class EditInFeatureFragment extends Fragment {
 
                     @Override
                     public void onError(final Throwable e) {
+                        e.printStackTrace();
                         Log.d("Attachment", "Error In delete Attachments ");
                         if (editorActivity != null) {
 
@@ -1234,7 +1257,7 @@ public class EditInFeatureFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     Utilities.dismissLoadingDialog();
-                                    Utilities.showToast(editorActivity, e.toString());
+//                                    Utilities.showToast(editorActivity, e.toString());
                                     Utilities.showToast(editorActivity, getString(R.string.connection_failed));
                                 }
                             });
@@ -1388,7 +1411,10 @@ public class EditInFeatureFragment extends Fragment {
         MediaPlayer ring = MediaPlayer.create(getActivity().getApplicationContext(), R.raw.starting_record);
         ring.start();
 
-        createFile("Audio", "", "mp4");
+        String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
+        String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+
+        createFile(pointName, pointFolderName, MP4);
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);

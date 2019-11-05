@@ -2,6 +2,7 @@ package activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import androidx.appcompat.app.ActionBar;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,15 +21,15 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+
+
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.Gravity;
@@ -41,7 +42,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -51,6 +51,12 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import com.esri.android.map.CalloutPopupWindow;
 import com.esri.android.map.FeatureLayer;
@@ -113,6 +119,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
@@ -125,6 +132,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import adapter.BookMarkAdapter;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import data.BookMark;
 import data.Index;
 import map.AttributeViewsBuilder;
@@ -143,8 +152,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 1;
     static int SearchCase = 0;
     public Point mLocation;
-    LinearLayout esriSeekBar, gcsSeekBar, baseMapSeekBar;
-    SeekBar esriOpacity, gcsOpacity, baseMapOpacity;
     public ArcGISTiledMapServiceLayer satelliteMap;
     public ArcGISTiledMapServiceLayer baseMap;
     public ArcGISDynamicMapServiceLayer baseMap2;
@@ -152,62 +159,30 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     public ArcGISFeatureLayer pointFeatureLayer, polygonFeatureLayer, lineFeatureLayer, riyadhRectangle, FCL_DISTRIBUTIONBOX, FCL_POLES, FCL_RMU, FCL_Substation, Service_Point, OCL_METER;
 
     public FragmentManager fragmentManager;
-    public RelativeLayout rlFragment;
     public GraphicsLayer userLocationGraphicLayer, offlineGraphicLayer, workingAreaGraphicLayer, labelsLayer;
     public GraphicsLayer pointFeatuersGraphicsLayer, polygonFeatuersGraphicsLayer, lineFeatuersGraphicsLayer;
-    public com.github.clans.fab.FloatingActionButton fabDistributionBox, fabPoles, fabRMU, fabSubStation, fabOCLMeter, fabServicePoint;
-    public FloatingActionButton fabLocation;
-    public FloatingActionButton fabFullScreen;
-    public MenuItem menuItemOnline, menuItemLoad, menuItemSync, menuItemIndex, menuItemOffline, item_load_previous_offline, menuItemOverflow, menuItemSearch,
-            menuItemSatellite, menuItemBaseMap, menuItemGCS, menuItemGoOfflineMode, menuItemGoOnlineMode;
+
     public boolean onlineData = true, isFragmentShown, isAddNew, changeLocationOnline, isInOnlineAddingMode;
     public FeatureLayer featureLayerPointsOffline, featureLayerLinesOffline, featureLayerPolygonsOffline;
     public boolean isInDrawMood;
     public GeodatabaseFeatureTable featureTablePoints, featureTableLines, featureTablePolygons;
     public GraphicsLayer drawGraphicLayer;
-    Button btnCancelAddOnline;
     public Graphic[] shapeToAdd;
     PictureMarkerSymbol locationSymbol;
     SimpleMarkerSymbol pointSymbol;
     SimpleLineSymbol shapeSymbol;
     SimpleMarkerSymbol pointSymbolGCS, pointSymbolGCSEdited;
     SimpleLineSymbol shapeSymbolGCS, shapeSymbolGCSEdited;
-    EditInFeatureFragment editInFeatureFragment;
-    View dialogView;
-    TextView tvLatLong, tvMoreLayerInfo;
-    private boolean isShowingLayerInfo;
-    FloatingActionButton fabMeasure;
-    Polygon poly;
-    ActionMode drawToolsActionMode;
-    boolean isOnRequestUpdate;
-    boolean isRequestBefore;
-    boolean isFullScreenMode;
-    ImageView mCompass;
-    Matrix mMatrix;
-    Bitmap mBitmap;
-    LocationManager manager;
-    Geometry workingAreaGeometry;
-    private MapView mapView;
-    private GoogleApiClient mGoogleApiClient;
-    private Location googleLocation;
-    private boolean isSatelliteAdded, isBaseMapAdded = true, isGCSAdded;
-    public AlertDialog errorInMapDownloadDialog;
-    public static boolean isInitialized;
-    public static int currentOfflineVersion = 1;
-    public static String localDatabaseTitle;
-    public static SpatialReference LAYER_SR;
-    private FeatureSet queryFeatureResults;
-    private int selectedIndex;
-    private int selectedObjectId;
-    private boolean isNewFeature;
-    private HashMap<String, Object> selectedFeatureAttributes;
-    public static UserCredentials mapServiceToken, featureServiceToken, GcsSatelliteToken;
-    public ArrayList<Index> indices;
-    private CheckBox cbPointLayer, cbPolygonLayer, cbLineLayer;
 
     public static final int SPATIAL_REFERENCE_CODE = 3857;
     public static final int GLOBAL_SPATIAL_REFERENCE_CODE = 4326;
 
+    boolean isOnRequestUpdate;
+    boolean isRequestBefore;
+    boolean isFullScreenMode;
+
+    int queryCount = 0;
+    Query query;
     /**
      * ----------------------------------Query All Callback--------------------------------------
      **/
@@ -218,25 +193,29 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
-            Log.i("ResponseForAll", "Error: " + errorCount);
+            queryCount++;
+
+            Log.i(TAG, "distributionBoxQueryAllCallBack(): ResponseForAll Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
+            /*if (errorCount == 3) {
                 selectFeaturesCallBackOnline.onError(e);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
             }
 
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+//            if ((successCount + errorCount) > 0 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("ResponseForAll", " onError 1");
+                        Log.i(TAG, "distributionBoxQueryAllCallBack(): ResponseForAll onError 1");
 
                         errorCount = 0;
                         successCount = 0;
@@ -248,16 +227,17 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+
+            Log.i(TAG, "distributionBoxQueryAllCallBack(): onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -265,14 +245,15 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
             if (queryResult.getGraphics().length > 0) {
                 selectedLayer = FCL_DISTRIBUTIONBOX;
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, "distributionBoxQueryAllCallBack(): onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, "distributionBoxQueryAllCallBack(): onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -281,19 +262,23 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "distributionBoxQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "distributionBoxQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 1 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, "distributionBoxQueryAllCallBack(): onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -302,20 +287,23 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
-                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+//                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+
+                        FCL_POLES.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, polesQueryAllCallBack);
+
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i(TAG, "distributionBoxQueryAllCallBack(): Success: " + successCount);
         }
     };
 
@@ -326,26 +314,29 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
-            Log.i("ResponseForAll", "Error: " + errorCount);
+            queryCount++;
+
+            Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
+              /*if (errorCount == 3) {
                 selectFeaturesCallBackOnline.onError(e);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
-
+            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
             }
 
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+//            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("ResponseForAll", " onError 1");
+                        Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll onError 1");
 
                         errorCount = 0;
                         successCount = 0;
@@ -357,16 +348,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+            Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -374,14 +365,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
+
             if (queryResult.getGraphics().length > 0) {
                 selectedLayer = FCL_POLES;
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -390,19 +383,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "polesQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 2 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "polesQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 2 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, " polesQueryAllCallBack(): ResponseForAll onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -411,20 +409,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
+
+                        FCL_RMU.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, rmuQueryAllCallBack);
+
+
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i("ResponseForAll", "Success: " + successCount);
         }
     };
 
@@ -436,21 +438,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
+            queryCount++;
             Log.i("ResponseForAll", "Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
+              /*if (errorCount == 3) {
                 selectFeaturesCallBackOnline.onError(e);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
             }
 
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+//            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -466,16 +471,18 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+
+
+            Log.i(TAG, "rmuQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -483,14 +490,15 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
             if (queryResult.getGraphics().length > 0) {
                 selectedLayer = FCL_RMU;
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, "rmuQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, "rmuQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -499,19 +507,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "rmuQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 3 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "rmuQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 3 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, "rmuQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -520,20 +533,22 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
+                        FCL_Substation.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, substationQueryAllCallBack);
+
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i("ResponseForAll", "Success: " + successCount);
         }
     };
 
@@ -545,25 +560,28 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
-            Log.i("ResponseForAll", "Error: " + errorCount);
+            queryCount++;
+            Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
+             /*if (errorCount == 3) {
                 selectFeaturesCallBackOnline.onError(e);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
             }
 
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+//            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            if (queryCount == 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("ResponseForAll", " onError 1");
+                        Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll onError 1");
 
                         errorCount = 0;
                         successCount = 0;
@@ -575,16 +593,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+            Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -592,15 +610,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
             if (queryResult.getGraphics().length > 0) {
 
                 selectedLayer = FCL_Substation;
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -609,19 +628,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 4 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "substationQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 4 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, "substationQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -630,20 +654,22 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
+
+                        OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, oclMeterQueryAllCallBack);
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i("ResponseForAll", "Success: " + successCount);
         }
     };
 
@@ -655,25 +681,28 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
-            Log.i("ResponseForAll", "Error: " + errorCount);
+            queryCount++;
+            Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
+  /*if (errorCount == 3) {
                 selectFeaturesCallBackOnline.onError(e);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
             }
 
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+//            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("ResponseForAll", " onError 1");
+                        Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll  onError 1");
 
                         errorCount = 0;
                         successCount = 0;
@@ -685,16 +714,17 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+
+            Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -702,14 +732,15 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
             if (queryResult.getGraphics().length > 0) {
 
                 selectedLayer = OCL_METER;
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -718,19 +749,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 5 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "oclMeterQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 5 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, "oclMeterQueryAllCallBack(): ResponseForAll queryAllCallBack onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -739,20 +775,23 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
+
+                        Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, servicePointQueryAllCallBack);
+
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i("ResponseForAll", "Success: " + successCount);
         }
     };
 
@@ -764,46 +803,49 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         public void onError(final Throwable e) {
             errorCount++;
-            Log.i("ResponseForAll", "Error: " + errorCount);
+            queryCount++;
+
+            Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll Error: " + errorCount);
             e.printStackTrace();
-            if (errorCount == 3) {
-                selectFeaturesCallBackOnline.onError(e);
-                errorCount = 0;
-                successCount = 0;
-                queryResults = null;
-            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {
+//              /*if (errorCount == 3) {
+//                selectFeaturesCallBackOnline.onError(e);
+//                errorCount = 0;
+//                successCount = 0;
+//                queryResults = null;
+//            } else if ((successCount + errorCount) == 1 && this.queryResults != null && this.queryResults.size() > 0) {*/
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) == 1 && (this.queryResults == null || this.queryResults.size() == 0)) {
+            } else if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("ResponseForAll", " onError 1");
+                        Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll onError 1");
 
                         errorCount = 0;
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
-                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+                        Utilities.showToast(MapEditorActivity.this, getString(R.string.zoom_more));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
         }
 
         public void onCallback(final FeatureSet queryResult) {
-            Log.i("ResponseForAll", "queryAllCallBack onCallback 1");
+
+
+            Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll onCallback 1");
 
 //            this.queryResults = new ArrayList<>();
 //            this.queryResults.add(queryResult);
@@ -811,15 +853,17 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            processSelectQueryResultOnline(this.queryResults);
 
             successCount++;
+            queryCount++;
+
             if (queryResult.getGraphics().length > 0) {
 
                 selectedLayer = Service_Point;
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 2");
+                Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll onCallback 2");
 
                 if (this.queryResults == null) {
 
-                    Log.i("ResponseForAll", "queryAllCallBack onCallback 3");
+                    Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll onCallback 3");
 
                     this.queryResults = new ArrayList<>();
                 }
@@ -828,19 +872,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 selectedLayer = null;
             }
 
-            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            try {
+                if (queryResults != null)
+                    Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll queryResults size = " + queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 4");
+//            if ((successCount + errorCount) <= 6 && this.queryResults != null && this.queryResults.size() > 0) {
+            if (queryCount == 6 && this.queryResults != null && this.queryResults.size() > 0) {
+                Log.i(TAG, "servicePointQueryAllCallBack(): onCallback 4");
 
                 processSelectQueryResultOnline(this.queryResults);
                 errorCount = 0;
                 successCount = 0;
                 queryResults = null;
-            }
-
-            if ((successCount + errorCount) <= 6 && (this.queryResults == null || this.queryResults.size() == 0)) {
-
-                Log.i("ResponseForAll", "queryAllCallBack onCallback 5");
+            } else if (queryCount == 6 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Log.i(TAG, "servicePointQueryAllCallBack(): ResponseForAll onCallback 5");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -849,20 +898,20 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
-                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+                        Utilities.showToast(MapEditorActivity.this, getString(R.string.zoom_more));
                     }
                 });
 
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.dismissLoadingDialog();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Utilities.dismissLoadingDialog();
+//                }
+//            });
 
-            Log.i("ResponseForAll", "Success: " + successCount);
+//            Log.i("ResponseForAll", "Success: " + successCount);
         }
     };
 
@@ -1348,6 +1397,150 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     };
     private Index selectedWorkIndex;
 
+    @BindView(R.id.rlFragment)
+    public RelativeLayout rlFragment;
+
+    @BindView(R.id.esriSeekBar)
+    LinearLayout esriSeekBar;
+
+    @BindView(R.id.gcsSeekBar)
+    LinearLayout gcsSeekBar;
+
+    @BindView(R.id.baseMapSeekBar)
+    LinearLayout baseMapSeekBar;
+
+    @BindView(R.id.fab_general)
+    FloatingActionMenu fabGeneral;
+
+    @BindView(R.id.fab_add_distribution_box)
+    public com.github.clans.fab.FloatingActionButton fabDistributionBox;
+
+    @BindView(R.id.fab_add_poles)
+    public com.github.clans.fab.FloatingActionButton fabPoles;
+
+    @BindView(R.id.fab_add_rmu)
+    public com.github.clans.fab.FloatingActionButton fabRMU;
+
+    @BindView(R.id.fab_add_sub_station)
+    public com.github.clans.fab.FloatingActionButton fabSubStation;
+
+    @BindView(R.id.fab_add_ocl_meter)
+    public com.github.clans.fab.FloatingActionButton fabOCLMeter;
+
+    @BindView(R.id.fab_add_service_point)
+    public com.github.clans.fab.FloatingActionButton fabServicePoint;
+
+    @BindView(R.id.fabLocation)
+    public FloatingActionButton fabLocation;
+
+    @BindView(R.id.fabFullScreen)
+    public FloatingActionButton fabFullScreen;
+
+    //    @BindView(R.id.item_go_online)
+    public MenuItem menuItemOnline;
+
+    //    @BindView(R.id.item_load_previous)
+    public MenuItem menuItemLoad;
+
+    //    @BindView(R.id.item_sync)
+    public MenuItem menuItemSync;
+
+    //    @BindView(R.id.fabFullScreen)
+    public MenuItem menuItemIndex;
+
+    //    @BindView(R.id.item_go_offline)
+    public MenuItem menuItemOffline;
+
+    //    @BindView(R.id.item_load_previous_offline)
+    public MenuItem item_load_previous_offline;
+
+    //    @BindView(R.id.overflow)
+    public MenuItem menuItemOverflow;
+
+//    @BindView(R.id.fabFullScreen)
+//    public MenuItem menuItemSearch;
+
+    //    @BindView(R.id.item_satellite)
+    public MenuItem menuItemSatellite;
+
+    //    @BindView(R.id.item_base_map)
+//    public MenuItem menuItemBaseMap;
+
+    //    @BindView(R.id.fabFullScreen)
+    public MenuItem menuItemGCS;
+
+    //    @BindView(R.id.item_go_offline_mode)
+    public MenuItem menuItemGoOfflineMode;
+
+    //    @BindView(R.id.item_go_online_mode)
+    public MenuItem menuItemGoOnlineMode;
+
+    @BindView(R.id.sb_esri_satalite_opacity)
+    SeekBar esriOpacity;
+
+    @BindView(R.id.sb_gcs_satalite_opacity)
+    SeekBar gcsOpacity;
+
+    @BindView(R.id.baseMapOpacity)
+    SeekBar baseMapOpacity;
+
+    EditInFeatureFragment editInFeatureFragment;
+
+    View dialogView;
+
+    @BindView(R.id.tvLatLong)
+    TextView tvLatLong;
+
+    @BindView(R.id.tv_more_layer_info)
+    TextView tvMoreLayerInfo;
+
+    private boolean isShowingLayerInfo;
+
+    FloatingActionButton fabMeasure;
+
+    Polygon poly;
+
+    ActionMode drawToolsActionMode;
+
+    @BindView(R.id.compass)
+    ImageView mCompass;
+
+    Matrix mMatrix;
+
+    Bitmap mBitmap;
+
+    LocationManager manager;
+
+    Geometry workingAreaGeometry;
+
+    @BindView(R.id.btnCancel)
+    Button btnCancelAddOnline;
+
+//    @BindView(R.id.toolbar)
+//    Toolbar mToolbar;
+
+    @BindView(R.id.mapView)
+    public MapView mapView;
+
+    private GoogleApiClient mGoogleApiClient;
+    private Location googleLocation;
+    private boolean isSatelliteAdded, isBaseMapAdded = true, isGCSAdded;
+    public AlertDialog errorInMapDownloadDialog;
+    public static boolean isInitialized;
+    public static int currentOfflineVersion = 1;
+    public static String localDatabaseTitle;
+    public static SpatialReference LAYER_SR;
+    private FeatureSet queryFeatureResults;
+    private int selectedIndex;
+    private int selectedObjectId;
+    private boolean isNewFeature;
+    private HashMap<String, Object> selectedFeatureAttributes;
+    public static UserCredentials mapServiceToken, featureServiceToken, GcsSatelliteToken;
+
+    public ArrayList<Index> indices;
+
+    public MapEditorActivity mCurrent;
+
     public MapView getMapView() {
         return mapView;
     }
@@ -1355,10 +1548,18 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_map_editor);
 
+        init();
+    }
+
+    private void init() {
         try {
+            mCurrent = MapEditorActivity.this;
+
+            ButterKnife.bind(mCurrent);
+
             isInitialized = false;
-            setContentView(R.layout.activity_map_editor);
 
             if (mGoogleApiClient == null) {
                 mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -1368,6 +1569,20 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         .build();
             }
 
+//            mToolbar.setTitle(getResources().getString(R.string.app_name));
+
+//            setActionBar(mToolbar);
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                Log.i(TAG, "init(): actionBar != null");
+                actionBar.setTitle(getResources().getString(R.string.app_name));
+                actionBar.setDisplayShowCustomEnabled(true);
+                actionBar.setDisplayShowTitleEnabled(false);
+                actionBar.setCustomView(R.layout.title);
+            } else {
+
+                Log.i(TAG, "init(): actionBar = null");
+            }
 
             mapServiceToken = new UserCredentials();
             featureServiceToken = new UserCredentials();
@@ -1379,53 +1594,18 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             mapServiceToken.setUserAccount("siteadmin", "siteadmin");
 
             featureServiceToken.setUserAccount("siteadmin", "siteadmin");
-//        featureServiceToken = null;
+
             GcsSatelliteToken.setUserToken(getString(R.string.GcsSatelliteToken), "android");
             GcsSatelliteToken.setAuthenticationType(UserCredentials.AuthenticationType.TOKEN);
-            mapView = (MapView) findViewById(R.id.mapView);
-            esriSeekBar = (LinearLayout) findViewById(R.id.esriSeekBar);
-            esriOpacity = (SeekBar) findViewById(R.id.sb_esri_satalite_opacity);
-
-            gcsSeekBar = (LinearLayout) findViewById(R.id.gcsSeekBar);
-            gcsOpacity = (SeekBar) findViewById(R.id.sb_gcs_satalite_opacity);
-
-            baseMapSeekBar = (LinearLayout) findViewById(R.id.baseMapSeekBar);
-            baseMapOpacity = (SeekBar) findViewById(R.id.baseMapOpacity);
-
-            cbPointLayer = (CheckBox) findViewById(R.id.cb_point_layer);
-            cbPolygonLayer = (CheckBox) findViewById(R.id.cb_polygon_layer);
-            cbLineLayer = (CheckBox) findViewById(R.id.cb_line_layer);
-
-            cbLineLayer.setOnCheckedChangeListener(this);
-            cbPolygonLayer.setOnCheckedChangeListener(this);
-            cbPointLayer.setOnCheckedChangeListener(this);
 
 
-            rlFragment = (RelativeLayout) findViewById(R.id.rlFragment);
-            tvLatLong = (TextView) findViewById(R.id.tvLatLong);
-            tvMoreLayerInfo = (TextView) findViewById(R.id.tv_more_layer_info);
             tvLatLong.setVisibility(View.VISIBLE);
             tvLatLong.setText(getResources().getString(R.string.loading_location));
 
-            mCompass = (ImageView) findViewById(R.id.compass);
+
             mCompass.setScaleType(ImageView.ScaleType.MATRIX);
             mMatrix = new Matrix();
             mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_compass);
-
-            btnCancelAddOnline = (Button) findViewById(R.id.btnCancel);
-
-            fabDistributionBox = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_distribution_box);
-            fabPoles = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_rmu);
-            fabRMU = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_poles);
-            fabSubStation = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_sub_station);
-            fabOCLMeter = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_ocl_meter);
-            fabServicePoint = (com.github.clans.fab.FloatingActionButton) findViewById(R.id.fab_add_service_point);
-
-            fabGeneral = (FloatingActionMenu) findViewById(R.id.fab_general);
-
-            fabFullScreen = (FloatingActionButton) findViewById(R.id.fabFullScreen);
-            fabLocation = (FloatingActionButton) findViewById(R.id.fabLocation);
-//            fabMeasure = (FloatingActionButton) findViewById(R.id.fabMesuar);
 
             locationSymbol = new PictureMarkerSymbol(ContextCompat.getDrawable(this, R.drawable.ic_user_location));
 
@@ -1445,13 +1625,9 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             fabOCLMeter.setOnClickListener(this);
             fabServicePoint.setOnClickListener(this);
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
-                    updateFeatureNumbers();
-                }
-            });
+            //Hide Map legend
+            showMapLegend();
+
 
             fabFullScreen.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -1473,8 +1649,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 public void onClick(View v) {
 
                     showUserLocation();
-                    if (mLocation != null)
+                    if (mLocation != null) {
+                        Log.i(TAG, "onCreate(): fab on Click listener mLocation != null");
                         MapUtilites.zoomToPoint(mapView, mLocation);
+                    } else {
+                        Log.i(TAG, "onCreate(): fab on Click listener mLocation == null");
+
+                    }
 
                 }
             });
@@ -1501,14 +1682,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 }
             });
 
-//            fabMeasure.setOnLongClickListener(new View.OnLongClickListener() {
-//                @Override
-//                public boolean onLongClick(View v) {
-//                    Toast.makeText(MapEditorActivity.this, "ادوات القياس", Toast.LENGTH_SHORT).show();
-//                    return true;
-//                }
-//            });
-
             btnCancelAddOnline.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1517,21 +1690,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             });
 
             btnCancelAddOnline.setVisibility(View.GONE);
-
-//            fabMeasure.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    if (mapView.isLoaded()) {
-//                        measure();
-//                        fabLocation.setVisibility(View.GONE);
-//                        fabGeneral.setVisibility(View.GONE);
-//                        fabMeasure.setVisibility(View.GONE);
-//                    } else {
-//                        Toast.makeText(MapEditorActivity.this, getResources().getString(R.string.map_not_loaded), Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//            });
-
 
             mapView.setOnStatusChangedListener(new OnStatusChangedListener() {
                 @Override
@@ -1556,7 +1714,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 }
             });
 
-            fragmentManager = getSupportFragmentManager();
+            fragmentManager = ((FragmentManager) getSupportFragmentManager());
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
@@ -1588,19 +1746,21 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             }
 
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setTitle(getResources().getString(R.string.app_name));
-                actionBar.setDisplayShowCustomEnabled(true);
-                actionBar.setDisplayShowTitleEnabled(false);
-                actionBar.setCustomView(R.layout.title);
-            }
 
 //            if (GeoDatabaseUtil.isOfflineGDBAvailable(this)) {
 //                Log.i(TAG, "gdb has been read");
 //            } else {
 //                Log.i(TAG, "cannot read gdb");
 //            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showMapLegend() {
+        try {
+            findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
+            updateFeatureNumbers();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1643,6 +1803,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {//TODO remove for method
+        super.onActivityResult(requestCode, resultCode, data);
         try {
             Log.i(TAG, "" + requestCode);
             Toast.makeText(this, "requestCode = " + requestCode, Toast.LENGTH_LONG).show();
@@ -1899,7 +2060,11 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     private void fullScreenMode() {
-        getSupportActionBar().hide();
+        try {
+            getSupportActionBar().hide();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         fabLocation.setVisibility(View.GONE);
         fabGeneral.setVisibility(View.GONE);
 //        fabMeasure.setVisibility(View.GONE);
@@ -1907,7 +2072,11 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     private void exitFullScreenMode() {
-        getSupportActionBar().show();
+        try {
+            getSupportActionBar().show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         fabLocation.setVisibility(View.VISIBLE);
         fabGeneral.setVisibility(View.VISIBLE);
 //        fabMeasure.setVisibility(View.VISIBLE);
@@ -1918,33 +2087,42 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     public void onBackPressed() {
 
-        if ((isSatelliteAdded || isBaseMapAdded) && getTiledOrDynamicLayersCount() > 1) { //isGCSAdded ||
+        Log.i(TAG, "onBackPressed(): is called");
+        /*if ((isSatelliteAdded || isBaseMapAdded) && getTiledOrDynamicLayersCount() > 1) {
+
+            //isGCSAdded ||
 //            if (menuItemGCS.isChecked()) {
-//                isGCSAdded = false;
+//                isGCSAdded = false;z
 //                if (gcsMap != null)
 //                    mapView.removeLayer(gcsMap);
 //                gcsSeekBar.setVisibility(View.GONE);
 //                tvLatLong.setVisibility(View.VISIBLE);
 //                menuItemGCS.setChecked(isGCSAdded);
 //            } else
-            if (menuItemSatellite.isChecked()) {
-                isSatelliteAdded = false;
-                if (satelliteMap != null)
-                    mapView.removeLayer(satelliteMap);
-                esriSeekBar.setVisibility(View.GONE);
-                tvLatLong.setVisibility(View.VISIBLE);
-                menuItemSatellite.setChecked(isSatelliteAdded);
-            } else if (menuItemBaseMap.isChecked()) {
-                isBaseMapAdded = false;
-                baseMapSeekBar.setVisibility(View.GONE);
-                tvLatLong.setVisibility(View.VISIBLE);
-                menuItemBaseMap.setChecked(isBaseMapAdded);
-            }
-            mapLayersUpdated();
-        } else if (isFragmentShown) {
+//            if (menuItemSatellite.isChecked()) {
+//                isSatelliteAdded = false;
+//                if (satelliteMap != null)
+//                    mapView.removeLayer(satelliteMap);
+//                esriSeekBar.setVisibility(View.GONE);
+//                tvLatLong.setVisibility(View.VISIBLE);
+//                menuItemSatellite.setChecked(isSatelliteAdded);
+//            } else if (menuItemBaseMap.isChecked()) {
+//                isBaseMapAdded = false;
+//                baseMapSeekBar.setVisibility(View.GONE);
+//                tvLatLong.setVisibility(View.VISIBLE);
+//                menuItemBaseMap.setChecked(isBaseMapAdded);
+//            }
+//            mapLayersUpdated();
+        } else */
+        if (isFragmentShown) {
+            Log.i(TAG, "onBackPressed(): isFragmentShown = " + isFragmentShown);
             if (isAddNew) {
+                Log.i(TAG, "onBackPressed(): isAddNew = true");
+
                 editInFeatureFragment.onDelete();
             } else {
+                Log.i(TAG, "onBackPressed(): isAddNew = false");
+
                 Utilities.showConfirmDialog(this, getResources().getString(R.string.exit), getResources().getString(R.string.exit_without_saving), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -1952,19 +2130,27 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         MapEditorActivity.super.onBackPressed();
                         isFragmentShown = false;
                         isAddNew = false;
-//                        } else {
-//                            Utilities.showToast(MapEditorActivity.this, getResources().getString(R.string.enter_required_fields_and_save));
-//                        }
+//
+                        //TODO New
+                        fabGeneral.setVisibility(View.VISIBLE);
+                        fabLocation.setVisibility(View.VISIBLE);
+                        mCompass.setVisibility(View.VISIBLE);
+                        fabFullScreen.setVisibility(View.VISIBLE);
+                        findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
+                        selectedLayer = null;
+                        shapeType = null;
                     }
                 });
             }
 
-            //TODO New
-            fabGeneral.setVisibility(View.VISIBLE);
-            fabLocation.setVisibility(View.VISIBLE);
-            mCompass.setVisibility(View.VISIBLE);
-            fabFullScreen.setVisibility(View.VISIBLE);
-            findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
+//            //TODO New
+//            fabGeneral.setVisibility(View.VISIBLE);
+//            fabLocation.setVisibility(View.VISIBLE);
+//            mCompass.setVisibility(View.VISIBLE);
+//            fabFullScreen.setVisibility(View.VISIBLE);
+//            findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
+//            selectedLayer = null;
+//            shapeType = null;
 
         } else if (isInOnlineAddingMode) {
             finishAddingOnline();
@@ -1992,52 +2178,55 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-
+        try {
+            getMenuInflater().inflate(R.menu.main_menu, menu);
+//        ButterKnife.bind(mCurrent, menu);
 //        menuItemIndex = menu.findItem(R.id.item_index);
 
-        menuItemOffline = menu.findItem(R.id.item_go_offline);
-        item_load_previous_offline = menu.findItem(R.id.item_load_previous_offline);
+            menuItemOffline = menu.findItem(R.id.item_go_offline);
+            item_load_previous_offline = menu.findItem(R.id.item_load_previous_offline);
 
-        menuItemOnline = menu.findItem(R.id.item_go_online);
+            menuItemOnline = menu.findItem(R.id.item_go_online);
 //        menuItemSearch = menu.findItem(R.id.item_search);
-        menuItemOverflow = menu.findItem(R.id.overflow);
-        menuItemSync = menu.findItem(R.id.item_sync);
-        menuItemLoad = menu.findItem(R.id.item_load_previous);
-        menuItemSatellite = menu.findItem(R.id.item_satellite);
-        menuItemGoOfflineMode = menu.findItem(R.id.item_go_offline_mode);
-        menuItemGoOnlineMode = menu.findItem(R.id.item_go_online_mode);
+            menuItemOverflow = menu.findItem(R.id.overflow);
+            menuItemSync = menu.findItem(R.id.item_sync);
+            menuItemLoad = menu.findItem(R.id.item_load_previous);
+            menuItemSatellite = menu.findItem(R.id.item_satellite);
+            menuItemGoOfflineMode = menu.findItem(R.id.item_go_offline_mode);
+            menuItemGoOnlineMode = menu.findItem(R.id.item_go_online_mode);
 
-        //        menuItemGCS = menu.findItem(R.id.item_gcs);
-        menuItemBaseMap = menu.findItem(R.id.item_base_map);
+            //        menuItemGCS = menu.findItem(R.id.item_gcs);
+//        menuItemBaseMap = menu.findItem(R.id.item_base_map);
 
-        if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
-            menuItemLoad.setVisible(false);
-        } else {
-            menuItemLoad.setVisible(true);
-        }
-        if (!onlineData) {
-            item_load_previous_offline.setVisible(true);
-            menuItemOffline.setVisible(false);
-            menuItemIndex.setVisible(false);
+            if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
+                menuItemLoad.setVisible(false);
+            } else {
+                menuItemLoad.setVisible(true);
+            }
+            if (!onlineData) {
+                item_load_previous_offline.setVisible(true);
+                menuItemOffline.setVisible(false);
+                menuItemIndex.setVisible(false);
 //            menuItemGCS.setVisible(false);
-            menuItemSatellite.setVisible(false);
-            menuItemBaseMap.setVisible(false);
-            menuItemSync.setVisible(true);
-            menuItemOnline.setVisible(true);
-            menuItemSearch.setVisible(false);
-            menuItemGoOfflineMode.setVisible(false);
-            menuItemGoOnlineMode.setVisible(true);
-        } else {
-            menuItemGoOfflineMode.setVisible(true);
-            menuItemGoOnlineMode.setVisible(false);
+                menuItemSatellite.setVisible(false);
+//                menuItemBaseMap.setVisible(false);
+                menuItemSync.setVisible(true);
+                menuItemOnline.setVisible(true);
+//            menuItemSearch.setVisible(false);
+                menuItemGoOfflineMode.setVisible(false);
+                menuItemGoOnlineMode.setVisible(true);
+            } else {
+                menuItemGoOfflineMode.setVisible(true);
+                menuItemGoOnlineMode.setVisible(false);
+            }
+//            menuItemBaseMap.setChecked(isBaseMapAdded);
+            Log.d("Test", "In OnCreate Options Menu");
+
+            if (selectedWorkIndex != null)
+                menuItemIndex.setTitle(selectedWorkIndex.getSheetNumber());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        menuItemBaseMap.setChecked(isBaseMapAdded);
-        Log.d("Test", "In OnCreate Options Menu");
-
-        if (selectedWorkIndex != null)
-            menuItemIndex.setTitle(selectedWorkIndex.getSheetNumber());
-
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -2182,7 +2371,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                             Toast.makeText(this, "One option must be checked!", Toast.LENGTH_SHORT).show();
                         }
                     }
-                    menuItemBaseMap.setChecked(isBaseMapAdded);
+//                    menuItemBaseMap.setChecked(isBaseMapAdded);
                     mapLayersUpdated();
                 } else {
                     Toast.makeText(this, R.string.map_not_loaded_yet, Toast.LENGTH_SHORT).show();
@@ -2551,7 +2740,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     private void hideFragment() {
-        fragmentManager.beginTransaction().remove(fragmentManager.findFragmentById(R.id.rlFragment)).commit();
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentById(R.id.rlFragment)).commit();
         rlFragment.setVisibility(View.INVISIBLE);
         isFragmentShown = false;
         isAddNew = false;
@@ -2694,16 +2883,23 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     private void getFeatureAndShowEditFragment(Geometry pointOfTap, long featureId, final boolean isNew) {
         try {
 
-            Log.i(TAG, "");
+            Log.i(TAG, "getFeatureAndShowEditFragment(): ");
             isNewFeature = isNew;
 
+//            LAYER_SR = SpatialReference.create(GLOBAL_SPATIAL_REFERENCE_CODE);
+
+//            Geometry featureExtent = GeometryEngine.project(mapView.getExtent(), LAYER_SR, mapView.getSpatialReference());
             Geometry featureExtent = GeometryEngine.project(mapView.getExtent(), mapView.getSpatialReference(), LAYER_SR);
             double currentMapWidth = featureExtent.calculateLength2D();
-            double twoPixels = currentMapWidth / 70;
+//            double twoPixels = currentMapWidth / 70;
+            double twoPixels = 5;
+
+            Log.i(TAG, "getFeatureAndShowEditFragment(): current map width = " + currentMapWidth);
+            Log.i(TAG, "getFeatureAndShowEditFragment(): two Pixels = " + twoPixels);
 
             if (onlineData) {
                 Utilities.showLoadingDialog(MapEditorActivity.this);
-                Query query = new Query();
+                query = new Query();
                 query.setOutFields(new String[]{"*"});
                 // query.setWhere((ColumnNames.SURVEYOR_ID + " = " + DataCollectionApplication.getSurveyorId()) + " OR " + (ColumnNames.SURVEYOR_ID + " is null " + " OR " + (ColumnNames.SURVEYOR_ID + " = 0 ")));
                 query.setWhere("1=1");
@@ -2715,8 +2911,10 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 if (pointOfTap != null) {
                     if (shapeType == null || shapeType.equals(POINT)) {
                         Envelope envelope = new Envelope(((Point) pointOfTap).getX() - twoPixels, ((Point) pointOfTap).getY() - twoPixels, ((Point) pointOfTap).getX() + twoPixels, ((Point) pointOfTap).getY() + twoPixels);
+//                        Envelope envelope = new Envelope(((Point) pointOfTap), 1000.0, 1000.0);
+
                         query.setGeometry(envelope);
-                        Log.i(TAG, "getFeatureAndShowEditFragment(): geometry is created");
+                        Log.i(TAG, "getFeatureAndShowEditFragment(): geometry is created  x = " + envelope.getCenter().getX() + " Y = " + envelope.getCenter().getY());
 
                     } else {
                         query.setGeometry(pointOfTap);
@@ -2724,14 +2922,12 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 }
                 query.setSpatialRelationship(SpatialRelationship.INTERSECTS);
 //                String [] outfields = new String[]{"Code", "OBJECTID","GlobalID"};
-////              query.setOutFields(outfields);
+//              query.setOutFields("*");
                 if (shapeType == null) {
                     Log.i(TAG, "getFeatureAndShowEditFragment query all callback");
 
                     queryOnAllLayersOnline(query);
-                } else if (shapeType.equals(LINE)) {
-                    Log.i(TAG, "getFeatureAndShowEditFragment lineFeatureLayer callback");
-                    lineFeatureLayer.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                    shapeType = POINT;
                 } else if (shapeType.equals(POINT)) {
 
                     Log.i(TAG, "getFeatureAndShowEditFragment pointFeatureLayer callback");
@@ -2757,6 +2953,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                             Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         }
+                    } else {
+                        queryOnAllLayersOnline(query);
                     }
                 } else if (shapeType.equals(POLYGON)) {
                     Log.i(TAG, "getFeatureAndShowEditFragment polygonFeatureLayer callback");
@@ -2807,12 +3005,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, queryAllCallBack);
 //            Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, queryAllCallBack);
 
+            queryCount = 0;
             FCL_DISTRIBUTIONBOX.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, distributionBoxQueryAllCallBack);
-            FCL_POLES.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, polesQueryAllCallBack);
-            FCL_RMU.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, rmuQueryAllCallBack);
-            FCL_Substation.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, substationQueryAllCallBack);
-            OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, oclMeterQueryAllCallBack);
-            Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, servicePointQueryAllCallBack);
+//            FCL_POLES.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, polesQueryAllCallBack);
+////            FCL_RMU.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, rmuQueryAllCallBack);
+////            FCL_Substation.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, substationQueryAllCallBack);
+////            OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, oclMeterQueryAllCallBack);
+////            Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, servicePointQueryAllCallBack);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -2864,95 +3063,109 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     //TODO
     private void processSelectQueryResultOnline(final ArrayList<FeatureSet> listQueryResults) {
-        Log.i(TAG, "processSelectQueryResultOnline(): is called");
+        try {
+            Log.i(TAG, "processSelectQueryResultOnline(): is called");
 
-        boolean noFeatures = true;
+            boolean noFeatures = true;
 
-        final ArrayList<String> names = new ArrayList<>();
-        final ArrayList<String> nameFeaturesIndex = new ArrayList<>();
+            final ArrayList<String> names = new ArrayList<>();
+            final ArrayList<String> nameFeaturesIndex = new ArrayList<>();
 
 
-        Log.i(TAG, "processSelectQueryResultOnline(): feature code = " + listQueryResults.get(0).getGraphics().length);
+            Log.i(TAG, "processSelectQueryResultOnline(): feature code = " + listQueryResults.get(0).getGraphics().length);
 
-        for (int i = 0; i < listQueryResults.size(); i++) {
-            FeatureSet queryResults = listQueryResults.get(i);
-            if (queryResults.getGraphics().length > 0) {
-                noFeatures = false;
-                for (int j = 0; j < queryResults.getGraphics().length; j++) {
+            for (int i = 0; i < listQueryResults.size(); i++) {
+                FeatureSet queryResults = listQueryResults.get(i);
+                if (queryResults.getGraphics().length > 0) {
+                    noFeatures = false;
+                    for (int j = 0; j < queryResults.getGraphics().length; j++) {
 
-                    String str = String.valueOf(queryResults.getGraphics()[j].getAttributes().get(ColumnNames.Code)); // TODO New version
+                        String str = String.valueOf("Point Code ( " + queryResults.getGraphics()[j].getAttributes().get(ColumnNames.Code) + " )"); // TODO New version
 
-                    if (str == null || str.isEmpty())
-                        str = "No Name";
+                        if (str == null || str.isEmpty())
+                            str = "No Name";
 
 
 //                    str += "  ( " + queryResults.getGraphics()[j].getGeometry().getType().name() + " ) ";
 
-                    Log.i(TAG, "processSelectQueryResultOnline(): feature code = " + str);
-                    names.add(str);
+                        Log.i(TAG, "processSelectQueryResultOnline(): feature code = " + str);
+                        names.add(str);
 
-                    //To Store Feature Index and graphic Index
-                    nameFeaturesIndex.add(i + "," + j);
-                }
-            }
-        }
-
-        if (noFeatures) {
-            Log.i(TAG, "processSelectQueryResultOnline(): listQueryResults size = " + listQueryResults.size());
-
-            Log.i(TAG, "processSelectQueryResultOnline(): there is no feature");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i(TAG, "processSelectQueryResultOnline(): dismissing dialog");
-
-                    Utilities.dismissLoadingDialog();
-                    Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
-                }
-            });
-        } else {
-
-            Log.i(TAG, "processSelectQueryResultOnline(): there is feature");
-            Log.i(TAG, "processSelectQueryResultOnline(): listQueryResults size = " + listQueryResults.size());
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i(TAG, "processSelectQueryResultOnline(): dismissing dialog");
-
-                    Utilities.dismissLoadingDialog();
-
-                    if (names.size() == 1) {
-                        showSelectedFeature(listQueryResults.get(0), 0, isNewFeature);
-                    } else {
-                        String[] array = names.toArray(new String[0]);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(MapEditorActivity.this);
-                        builder.setTitle("Choose Service To Edit");
-                        builder.setCancelable(true);
-                        builder.setItems(array, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Utilities.showLoadingDialog(MapEditorActivity.this);
-                                    }
-                                });
-
-                                //get Feature Index and graphic Index
-                                String[] str = nameFeaturesIndex.get(which).split(",");
-                                if (str.length == 2) {
-                                    int featureIndex = Integer.parseInt(str[0]);
-                                    int graphicIndex = Integer.parseInt(str[1]);
-                                    showSelectedFeature(listQueryResults.get(featureIndex), graphicIndex, isNewFeature);
-                                }
-                            }
-                        });
-                        builder.setNegativeButton("Cancel", null);
-                        builder.show();
+                        //To Store Feature Index and graphic Index
+                        nameFeaturesIndex.add(i + "," + j);
                     }
                 }
-            });
+            }
+
+            if (noFeatures) {
+                Log.i(TAG, "processSelectQueryResultOnline(): listQueryResults size = " + listQueryResults.size());
+
+                Log.i(TAG, "processSelectQueryResultOnline(): there is no feature");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i(TAG, "processSelectQueryResultOnline(): dismissing dialog");
+
+                        Utilities.dismissLoadingDialog();
+                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+                    }
+                });
+            } else {
+
+                Log.i(TAG, "processSelectQueryResultOnline(): there is feature");
+                Log.i(TAG, "processSelectQueryResultOnline(): listQueryResults size = " + listQueryResults.size());
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i(TAG, "processSelectQueryResultOnline(): dismissing dialog");
+
+                        Utilities.dismissLoadingDialog();
+
+                        if (names.size() == 1) {
+                            showSelectedFeature(listQueryResults.get(0), 0, isNewFeature);
+                        } else {
+
+                            String[] array = names.toArray(new String[0]);
+
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MapEditorActivity.this);
+
+                            builder.setTitle("Choose Service To Edit");
+
+                            builder.setCancelable(true);
+
+                            builder.setItems(array, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Utilities.showLoadingDialog(MapEditorActivity.this);
+                                        }
+                                    });
+
+                                    //get Feature Index and graphic Index
+                                    String[] str = nameFeaturesIndex.get(which).split(",");
+                                    if (str.length == 2) {
+                                        int featureIndex = Integer.parseInt(str[0]);
+                                        int graphicIndex = Integer.parseInt(str[1]);
+                                        shapeType = POINT;
+                                        showSelectedFeature(listQueryResults.get(featureIndex), graphicIndex, isNewFeature);
+                                    }
+                                }
+                            });
+
+                            builder.setNegativeButton("Cancel", null);
+                            builder.show();
+
+                            shapeType = null;
+
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -3053,8 +3266,14 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            pointFeatureLayer.queryAttachmentInfos(objId, attachmentCallbackOnline);
                 Log.i(TAG, "showSelectedFeature(): shape to add is point");
                 Log.i(TAG, "showSelectedFeature(): requesting attachments");
-//                FCL_DISTRIBUTIONBOX.queryAttachmentInfos(objId, attachmentCallbackOnline);
+
                 if (selectedLayer != null) {
+                    Map<String, Object> map = queryFeatureResults.getGraphics()[selectedIndex].getAttributes();
+                    final HashMap<String, Object> attributes = (map instanceof HashMap) ? (HashMap<String, Object>) map : new HashMap<>(map);
+//                    selectedLayer = FCL_DISTRIBUTIONBOX;
+                    showResult(selectedObjectId, attributes, null, isNewFeature);
+
+                /*
                     if (selectedLayer.equals(FCL_DISTRIBUTIONBOX)) {
                         selectedLayer = FCL_DISTRIBUTIONBOX;
 
@@ -3082,7 +3301,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         FCL_Substation.queryAttachmentInfos(objId, substationAttachmentCallbackOnline);
                         OCL_METER.queryAttachmentInfos(objId, oclMeterAttachmentCallbackOnline);
                         Service_Point.queryAttachmentInfos(objId, servicePointAttachmentCallbackOnline);
-                    }
+                    }*/
                 }
             } else if (shapeToAdd[0].getGeometry() instanceof Polyline) {
                 lineFeatureLayer.queryAttachmentInfos(objId, attachmentCallbackOnline);
@@ -3157,13 +3376,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         try {
             Log.i(TAG, "showEditingFragment(): is called");
             Log.i(TAG, "showEditingFragment(): attributes size" + (attributes.isEmpty() ? 0 : attributes.size()));
-            Log.i(TAG, "showEditingFragment(): attachmentInfos size" + (attachmentInfos.length));
+//            Log.i(TAG, "showEditingFragment(): attachmentInfos size" + (attachmentInfos.length));
 
             finishAddingOnline();
 
             rlFragment.setVisibility(View.VISIBLE);
             editInFeatureFragment = EditInFeatureFragment.newInstance(id, attributes, attachmentInfos);
-            fragmentManager.beginTransaction()
+            getSupportFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
                     .replace(R.id.rlFragment, editInFeatureFragment)
                     .addToBackStack(null)
@@ -3314,7 +3533,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     public void onSave(AttributeViewsBuilder listAdapter, String code, String deviceID, String GlobalID) {
-        if (true) {
+//        if (true) {
+        try {
             boolean isGCS = false;
             boolean isTypeField = false;
             boolean hasEdits = false;
@@ -3396,14 +3616,10 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             Utilities.showLoadingDialog(MapEditorActivity.this);
 
             attrs.put(ColumnNames.Code, code);
-            attrs.put(ColumnNames.GlobalID, GlobalID);
+//            attrs.put(ColumnNames.GlobalID, GlobalID);
             attrs.put(ColumnNames.Device_No, deviceID);
-
-
 //                if (isGCS)
 //                    attrs.put(ColumnNames.CHECK_SURVEYOR, DataCollectionApplication.getSurveyorId());
-
-
             if (onlineData) {
                 attrs.put(selectedLayer.getObjectIdField(), shapeToAdd[0].getAttributes().get("OBJECTID"));
 
@@ -3415,24 +3631,29 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
 
                 if (shapeToAdd[0].getGeometry() instanceof Point) {
-//                    FCL_DISTRIBUTIONBOX.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     if (selectedLayer.equals(FCL_DISTRIBUTIONBOX)) {
+                        Log.i(TAG, "onSave(): FCL_DISTRIBUTIONBOX.applyEdits ");
                         FCL_DISTRIBUTIONBOX.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     } else if (selectedLayer.equals(FCL_POLES)) {
+                        Log.i(TAG, "onSave(): FCL_POLES.applyEdits ");
                         FCL_POLES.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     } else if (selectedLayer.equals(FCL_RMU)) {
+                        Log.i(TAG, "onSave(): FCL_RMU.applyEdits ");
                         FCL_RMU.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     } else if (selectedLayer.equals(FCL_Substation)) {
+                        Log.i(TAG, "onSave(): FCL_Substation.applyEdits ");
                         FCL_Substation.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     } else if (selectedLayer.equals(OCL_METER)) {
+                        Log.i(TAG, "onSave(): OCL_METER.applyEdits ");
                         OCL_METER.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
 
                     } else if (selectedLayer.equals(Service_Point)) {
+                        Log.i(TAG, "onSave(): Service_Point.applyEdits ");
                         Service_Point.applyEdits(null, null, new Graphic[]{newGraphic}, editOrDeleteInShapeCallback);
                     }
 
@@ -3443,7 +3664,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 }
 
 
-            } else {
+            }
+            /*else {
 
                 attrs.put(featureTableLines.getObjectIdField(), listAdapter.attributes.get(featureTableLines.getObjectIdField()));
                 try {
@@ -3471,7 +3693,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                     typeToRefresh = POLYGON;
                 }
                 refreshPOI();
-            }
+            }*/
 //            } else {
 //                hideFragment();
 //                String typeToRefresh = null;
@@ -3486,6 +3708,11 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //            }
 
             changeLocationOnline = false;
+//        }
+        } catch (Exception e) {
+            Log.i(TAG, "onSave(): exception " + e.getMessage());
+            e.printStackTrace();
+
         }
     }
 
@@ -3905,9 +4132,9 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     public void onResume() {
         super.onResume();
-        if (mGoogleApiClient.isConnected() && !isOnRequestUpdate) {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && !isOnRequestUpdate) {
             createLocationRequest();
-        } else if (!mGoogleApiClient.isConnected()) {
+        } else if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();
         }
     }
@@ -3915,7 +4142,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     protected void onPause() {
         super.onPause();
-        if (mGoogleApiClient.isConnected()) {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
         }
@@ -3923,7 +4150,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     protected void onDestroy() {
-        if (mGoogleApiClient.isConnected()) {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
         }
@@ -3959,13 +4186,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             findViewById(R.id.linear_layers_info).setVisibility(View.VISIBLE);
 
             if (Utilities.isNetworkAvailable(this) && onlineData) {
-                if (indices == null || indices.size() == 0) {
+              /*  if (indices == null || indices.size() == 0) {
                     getIndices();
                 } else if (selectedWorkIndex == null) {
                     Toast.makeText(this, R.string.choose_index_to_work, Toast.LENGTH_SHORT).show();
                 } else {
                     getFeatures();
-                }
+                }*/
 
             } else {
 
@@ -4037,45 +4264,54 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Log.d("test", "In On New Intent");
-        super.onNewIntent(intent);
-        if (intent != null) {
-            if (intent.getAction().equals("Notification")) {
-                Bundle bundle = intent.getExtras();
-                if (bundle != null) {
-                    String featureId = intent.getExtras().getString("OBJECTID");
-                    if (featureId != null && !featureId.isEmpty()) {
-                        if (pointFeatureLayer != null) {
-                            Log.i("onNewIntent", "calling getFeatureAndShowEditFragment()");
-                            getFeatureAndShowEditFragment(null, Long.parseLong(featureId), false);
+        try {
+            Log.d("test", "In On New Intent");
+            super.onNewIntent(intent);
+            if (intent != null) {
+                if (intent.getAction().equals("Notification")) {
+                    Bundle bundle = intent.getExtras();
+                    if (bundle != null) {
+                        String featureId = intent.getExtras().getString("OBJECTID");
+                        if (featureId != null && !featureId.isEmpty()) {
+                            if (pointFeatureLayer != null) {
+                                Log.i("onNewIntent", "calling getFeatureAndShowEditFragment()");
+                                getFeatureAndShowEditFragment(null, Long.parseLong(featureId), false);
+                            }
                         }
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public void clearAllGraphicLayers() {
-        if (lineFeatuersGraphicsLayer == null) {
-            mapInitialized();
-        } else {
-            lineFeatuersGraphicsLayer.removeAll();
-            pointFeatuersGraphicsLayer.removeAll();
-            polygonFeatuersGraphicsLayer.removeAll();
-            labelsLayer.removeAll();
+
+        try {
+            if (lineFeatuersGraphicsLayer == null) {
+                mapInitialized();
+            } else {
+                lineFeatuersGraphicsLayer.removeAll();
+                pointFeatuersGraphicsLayer.removeAll();
+                polygonFeatuersGraphicsLayer.removeAll();
+                labelsLayer.removeAll();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if (buttonView.getId() == R.id.cb_point_layer) {
-            pointFeatuersGraphicsLayer.setVisible(isChecked);
-            labelsLayer.setVisible(isChecked);
-        } else if (buttonView.getId() == R.id.cb_line_layer) {
-            lineFeatuersGraphicsLayer.setVisible(isChecked);
-        } else {
-            polygonFeatuersGraphicsLayer.setVisible(isChecked);
-        }
+//        if (buttonView.getId() == R.id.cb_point_layer) {
+//            pointFeatuersGraphicsLayer.setVisible(isChecked);
+//            labelsLayer.setVisible(isChecked);
+//        } else if (buttonView.getId() == R.id.cb_line_layer) {
+//            lineFeatuersGraphicsLayer.setVisible(isChecked);
+//        } else {
+//            polygonFeatuersGraphicsLayer.setVisible(isChecked);
+//        }
     }
 
 
@@ -4242,70 +4478,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     }
 
-//    private class AsyncQueryTaskForWorkingArea extends AsyncTask<QueryParameters, Void, FeatureResult> {
-//
-//        @Override
-//        protected void onPreExecute() {
-//            Utilities.showLoadingDialog(MapEditorActivity.this);
-//        }
-//
-//        @Override
-//        protected FeatureResult doInBackground(QueryParameters... qParameters) {
-//            String url = getString(R.string.point_feature_layer_services);
-//
-//            QueryTask qTask = null;
-//            try {
-//                qTask = new QueryTask(url,featureServiceToken);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//            FeatureResult results = null;
-//
-//            try {
-//                if (qTask != null) {
-//                    results = qTask.execute(qParameters[0]);
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//            return results;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(FeatureResult results) {
-//            Utilities.dismissLoadingDialog();
-//            if (results != null) {
-//                for (Object element : results) {
-//                    if (element instanceof Feature) {
-//                        try {
-//                            final Feature feature = (Feature) element;
-//                            workingAreaGeometry = feature.getGeometry();
-//                            mapView.setExtent(workingAreaGeometry, 100, true);
-//                            SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.RED, 3, SimpleLineSymbol.STYLE.SOLID);
-//                            if (workingAreaGraphicLayer != null) {
-//                                workingAreaGraphicLayer.removeAll();
-//                                workingAreaGraphicLayer.addGraphic(new Graphic(workingAreaGeometry, lineSymbol));
-//                            }
-//                            break;
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-////                            mapView.setMaxExtent(new Envelope(3648439.283628551, 1218200.3409051022, 6691440.351455368, 4016160.2906351034));
-////                            mapView.setMinScale(1.801524E7);
-//                        }
-//                    }
-//                }
-//            } else {
-//                // case account doesn't have any working area
-////                mapView.setMaxExtent(new Envelope(3648439.283628551, 1218200.3409051022, 6691440.351455368, 4016160.2906351034));
-////                mapView.setMinScale(1.801524E7);
-//                Toast.makeText(MapEditorActivity.this, R.string.no_working_area, Toast.LENGTH_LONG).show();
-//            }
-//            initMap();
-//            refreshPOI();
-//        }
-//    }
 
     private class AsyncQueryTaskForPoints extends AsyncTask<QueryParameters, Void, FeatureResult> {
 
@@ -4726,9 +4898,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             ((TextView) findViewById(R.id.tv_edit_line)).setText("عداد كهرباء");
             ((TextView) findViewById(R.id.tv_new_polygon)).setText("نقطة الخدمة");
 
-//            ((TextView) findViewById(R.id.tv_gcs_line)).setText("الأساسية " + "( " + gcsLines + " )");
-//            ((TextView) findViewById(R.id.tv_gcs_point)).setText("الأساسية " + "( " + gcsPoints + " )");
-//            ((TextView) findViewById(R.id.tv_gcs_polygon)).setText("الأساسية " + "( " + gcsPolygons + " )");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -4736,7 +4905,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     ///////////////////////////////////////////////////////////////////////////
     private Geometry geometryToAdd;
-    private android.support.v7.view.ActionMode addShapeActionMode;
+    private ActionMode addShapeActionMode;
     private double mResult;
     private CalloutPopupWindow mCallout;
     private TextView mText;
@@ -4747,22 +4916,21 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     public static final String LINE = "Line";
     public static final String POINT = "Point";
     private static String shapeType = null;
-    private FloatingActionMenu fabGeneral;
 
     public ArcGISFeatureLayer selectedLayer = null;
 
-    private android.support.v7.view.ActionMode.Callback addShapeActionModeCallback = new android.support.v7.view.ActionMode.Callback() {
-        public boolean onCreateActionMode(android.support.v7.view.ActionMode actionMode, Menu menu) {
+    private ActionMode.Callback addShapeActionModeCallback = new ActionMode.Callback() {
+        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
             MenuInflater inflater = getMenuInflater();
             inflater.inflate(R.menu.menu_action_add_shape, menu);
             return true;
         }
 
-        public boolean onPrepareActionMode(android.support.v7.view.ActionMode actionMode, Menu menu) {
+        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
             return false;
         }
 
-        public boolean onActionItemClicked(android.support.v7.view.ActionMode actionMode, MenuItem menuItem) {
+        public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.item_undo:
                     undo();
@@ -4808,7 +4976,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             }
         }
 
-        public void onDestroyActionMode(android.support.v7.view.ActionMode actionMode) {
+        public void onDestroyActionMode(ActionMode actionMode) {
             if (addShapeActionMode != null) {
                 addShapeActionMode = null;
                 finishAddingOnline();
@@ -4819,43 +4987,48 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     public void onClick(View v) {
 
-        if (mapView.isLoaded()) {
+        try {
+            if (mapView.isLoaded()) {
 
 //        fabGeneral.close(true);
-            fabGeneral.hideMenu(true);
-            currentAddedPoints = new ArrayList<>();
-            prevAddedPoints = new ArrayList<>();
-            mGraphicsLayerAddShapes.removeAll();
-            if (v.getId() == R.id.fab_add_distribution_box) {
-                shapeType = POINT;
-                selectedLayer = FCL_DISTRIBUTIONBOX;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            } else if (v.getId() == R.id.fab_add_poles) {
-                shapeType = POINT;
-                selectedLayer = FCL_POLES;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            } else if (v.getId() == R.id.fab_add_rmu) {
-                shapeType = POINT;
-                selectedLayer = FCL_RMU;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            } else if (v.getId() == R.id.fab_add_sub_station) {
-                shapeType = POINT;
-                selectedLayer = FCL_Substation;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            } else if (v.getId() == R.id.fab_add_ocl_meter) {
-                shapeType = POINT;
-                selectedLayer = OCL_METER;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            } else if (v.getId() == R.id.fab_add_service_point) {
-                shapeType = POINT;
-                selectedLayer = Service_Point;
-                addShapeActionMode = startSupportActionMode(addShapeActionModeCallback);
-            }
+                fabGeneral.hideMenu(true);
+                currentAddedPoints = new ArrayList<>();
+                prevAddedPoints = new ArrayList<>();
+                mGraphicsLayerAddShapes.removeAll();
+                if (v.getId() == R.id.fab_add_distribution_box) {
+                    shapeType = POINT;
+                    selectedLayer = FCL_DISTRIBUTIONBOX;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                } else if (v.getId() == R.id.fab_add_poles) {
+                    shapeType = POINT;
+                    selectedLayer = FCL_POLES;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                } else if (v.getId() == R.id.fab_add_rmu) {
+                    shapeType = POINT;
+                    selectedLayer = FCL_RMU;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                } else if (v.getId() == R.id.fab_add_sub_station) {
+                    shapeType = POINT;
+                    selectedLayer = FCL_Substation;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                } else if (v.getId() == R.id.fab_add_ocl_meter) {
+                    shapeType = POINT;
+                    selectedLayer = OCL_METER;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                } else if (v.getId() == R.id.fab_add_service_point) {
+                    shapeType = POINT;
+                    selectedLayer = Service_Point;
+                    addShapeActionMode = startActionMode(addShapeActionModeCallback);
+                }
 
-            isInOnlineAddingMode = true;
-            setUpAddingNewFeatureOnline();
-        } else {
-            Toast.makeText(MapEditorActivity.this, getResources().getString(R.string.map_not_loaded), Toast.LENGTH_SHORT).show();
+                isInOnlineAddingMode = true;
+                setUpAddingNewFeatureOnline();
+
+            } else {
+                Toast.makeText(MapEditorActivity.this, getResources().getString(R.string.map_not_loaded), Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

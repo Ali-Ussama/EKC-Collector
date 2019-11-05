@@ -1,14 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
     defaultConfig {
         ndk {
             abiFilters "armeabi", "armeabi-v7a", "x86", "mips"
         }
         applicationId 'com.gcs.riyadh'
-        minSdkVersion 19
-        targetSdkVersion 26
+        minSdkVersion 19 /*Targeting devices from kitkat and greater*/
+        targetSdkVersion 28
         versionCode 7
         versionName "2.2.2"
         multiDexEnabled true
@@ -18,6 +19,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
@@ -36,18 +41,33 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:multidex:1.0.1'
+    implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.esri.arcgis.android:arcgis-android:10.2.9'
 
     implementation 'com.github.clans:fab:1.6.4'
-    //noinspection GradleCompatible
-    implementation 'com.android.support:appcompat-v7:26.0.1'
-    implementation 'com.android.support:design:26.0.1'
-    implementation 'com.google.android.gms:play-services-location:11.0.4'
-    implementation 'com.google.firebase:firebase-messaging:11.0.4'
+
+    implementation 'com.google.android.gms:play-services-location:17.0.0'
+    implementation 'com.google.firebase:firebase-messaging:20.0.0'
     implementation 'com.squareup.picasso:picasso:2.3.2'
-    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'
-    implementation 'com.squareup.okhttp3:okhttp:3.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+    implementation 'com.squareup.okhttp:okhttp:2.7.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.10.0'
+
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.2.0-alpha01'
+
+    // http://jakewharton.github.io/butterknife
+    implementation 'com.jakewharton:butterknife:10.2.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
+
+    //https://github.com/jsibbold/zoomage
+    implementation 'com.jsibbold:zoomage:1.2.0'
+
+    //https://github.com/afollestad/material-dialogs
+    implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
+
+    implementation 'de.hdodenhof:circleimageview:3.0.0'
 }

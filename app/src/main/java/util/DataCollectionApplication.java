@@ -3,11 +3,13 @@ package util;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.Resources;
+
 import android.os.Build;
-import android.support.multidex.MultiDexApplication;
-import android.util.DisplayMetrics;
+
+
 import android.util.Log;
+
+import androidx.multidex.MultiDexApplication;
 
 import java.util.ArrayList;
 import java.util.Locale;

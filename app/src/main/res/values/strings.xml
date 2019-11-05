@@ -26,11 +26,10 @@
     <string name="notes">Notes:</string>
 
 
-
-                                                        <!--Ali Ussama Update-->
+    <!--Ali Ussama Update-->
     <string name="BaseMap" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_AllMap/MapServer</string>
 
-<!--    <string name="BaseMap2" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_Index/MapServer</string>-->
+    <!--    <string name="BaseMap2" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_Index/MapServer</string>-->
     <string name="BaseMap2" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/EKC/EKC_Collector/MapServer</string>
 
     <!--<string name="gcs_feature_server" translatable="false">http://41.38.90.172:6080/arcgis/rest/services/GCS_TEST/FeatureServer</string>-->
@@ -41,9 +40,11 @@
     <!--<string name="index_services" translatable="false">http://41.38.90.172:6080/arcgis/rest/services/GCS_TEST/FeatureServer/3</string>-->
 
 
-<!--    <string name="gcs_feature_server" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer</string>-->
+    <!--    <string name="gcs_feature_server" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer</string>-->
 
     <string name="gcs_feature_server" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/EKC/EKC_Collector/FeatureServer</string>
+    <string name="gcs_feature_server_test" translatable="false"> http://196.218.181.250:6080/arcgis/rest/services/TEST/TEST_EKC/FeatureServer</string>
+
 
     <string name="point_feature_layer_services" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer/0</string>
     <string name="line_feature_layer_services" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer/1</string>
@@ -58,7 +59,7 @@
 
     <string name="index_services" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer/3</string>
 
-                                                            <!--Ali Ussama Update-->
+    <!--Ali Ussama Update-->
 
     <string name="GcsSatellite" translatable="false">http://54.187.60.111/arcgis/rest/services/GCS_Cahced/MapServer</string>
 

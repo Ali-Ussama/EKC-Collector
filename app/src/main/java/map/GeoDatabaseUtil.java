@@ -8,12 +8,11 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.support.v7.app.AlertDialog;
+
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
@@ -163,7 +162,7 @@ public class GeoDatabaseUtil {
 //       activity.menuItemGCS.setVisible(true);
         // activity.menuItemSatellite.setVisible(true);
         // activity.menuItemBaseMap.setVisible(true);
-        activity.menuItemSearch.setVisible(true);
+//        activity.menuItemSearch.setVisible(true);
         activity.item_load_previous_offline.setVisible(false);
 
         if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
@@ -213,7 +212,7 @@ public class GeoDatabaseUtil {
 
         Log.i(TAG, "Getting Feature Service Info...");
 
-        gdbTask = new GeodatabaseSyncTask(activity.getResources().getString(R.string.gcs_feature_server), MapEditorActivity.featureServiceToken);
+        gdbTask = new GeodatabaseSyncTask(activity.getResources().getString(R.string.gcs_feature_server_test), MapEditorActivity.featureServiceToken);
         gdbTask.fetchFeatureServiceInfo(new CallbackListener<FeatureServiceInfo>() {
             @Override
             public void onError(Throwable e) {
@@ -410,10 +409,10 @@ public class GeoDatabaseUtil {
                         activity.menuItemIndex.setVisible(false);
 //                        activity.menuItemGCS.setVisible(false);
                         activity.menuItemSatellite.setVisible(false);
-                        activity.menuItemBaseMap.setVisible(false);
+//                        activity.menuItemBaseMap.setVisible(false);
                         activity.menuItemSync.setVisible(true);
                         activity.menuItemOnline.setVisible(true);
-                        activity.menuItemSearch.setVisible(false);
+//                        activity.menuItemSearch.setVisible(false);
                         if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
                             activity.menuItemLoad.setVisible(false);
                         } else {

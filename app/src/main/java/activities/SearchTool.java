@@ -7,7 +7,7 @@ package activities;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.support.v4.content.ContextCompat;
+
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -18,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+
+import androidx.core.content.ContextCompat;
 
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.MapView;

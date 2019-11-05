@@ -1,7 +1,6 @@
 package map;
 
 import android.content.Context;
-import android.support.design.widget.TextInputLayout;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.util.Log;
@@ -26,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.gcs.riyadh.R;
+import com.google.android.material.textfield.TextInputLayout;
 
 import util.DataCollectionApplication;
 

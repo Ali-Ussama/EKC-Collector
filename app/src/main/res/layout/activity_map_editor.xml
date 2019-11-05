@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <com.esri.android.map.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
@@ -18,7 +19,21 @@
             android:visibility="invisible" />
     </com.esri.android.map.MapView>
 
-<!--    <ImageView-->
+<!--    <com.google.android.material.appbar.AppBarLayout-->
+<!--        android:id="@+id/appBar_layout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        android:theme="@style/ThemeOverlay.AppCompat.ActionBar">-->
+
+<!--        <androidx.appcompat.widget.Toolbar-->
+<!--            android:id="@+id/toolbar"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"/>-->
+
+<!--    </com.google.android.material.appbar.AppBarLayout>-->
+
+    <!--    <ImageView-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->
 <!--        android:layout_alignParentBottom="true"-->
@@ -51,7 +66,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_marginBottom="10dp"
-            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:visibility="gone">
 
@@ -79,7 +94,7 @@
             android:layout_alignParentTop="true"
             android:layout_below="@id/esriSeekBar"
             android:layout_marginBottom="10dp"
-            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:visibility="gone">
 
@@ -105,7 +120,7 @@
             android:layout_alignParentTop="true"
             android:layout_below="@id/gcsSeekBar"
             android:layout_marginBottom="10dp"
-            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:visibility="gone">
 
@@ -134,17 +149,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/rlLatLong"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:src="@drawable/ic_compass" />
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabFullScreen"
         style="@style/floating_action_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/compass"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:src="@drawable/ic_fullscreen_white_24dp"
         app:borderWidth="0dp"
@@ -166,46 +181,19 @@
         android:textStyle="bold"
         android:visibility="invisible" />
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabLocation"
         style="@style/floating_action_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:src="@drawable/ic_my_location_white_24dp"
         app:borderWidth="0dp"
         app:elevation="0dp"
         app:fabSize="normal" />
 
-<!--    <LinearLayout-->
-<!--        android:id="@+id/linearfabMesuar"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_above="@id/fabLocation"-->
-<!--        android:layout_alignLeft="@id/fabLocation"-->
-<!--        android:layout_gravity="right"-->
-<!--        android:layout_marginBottom="10dp"-->
-<!--        android:padding="0dp">-->
-
-<!--        <android.support.design.widget.FloatingActionButton-->
-<!--            android:id="@+id/fabMesuar"-->
-<!--            style="@style/floating_action_button"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_gravity="right"-->
-<!--            android:src="@drawable/ruler"-->
-<!--            app:borderWidth="0dp"-->
-<!--            app:elevation="0dp"-->
-<!--            app:fabSize="normal" />-->
-<!--    </LinearLayout>-->
-
-
-    <!--<LinearLayout-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--&gt;-->
 
     <com.github.clans.fab.FloatingActionMenu
         android:id="@+id/fab_general"
@@ -213,7 +201,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@id/fabLocation"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginBottom="10dp"
         android:padding="0dp"
         android:src="@drawable/ic_add_location_white_24dp"
@@ -248,37 +236,37 @@
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_distribution_box"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_ic_dist_box"
             app:fab_label="مربع توزيع" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_poles"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_ic_poles"
             app:fab_label="عمود كهربائى" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_rmu"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_ic_rmu"
             app:fab_label="حلقة وحدة رئيسية" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_sub_station"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_ic_substation"
             app:fab_label="محطة فرعية" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_ocl_meter"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_ocl_meter"
             app:fab_label="عداد كهرباء" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_add_service_point"
             style="@style/MenuButtonsStyle"
-            android:src="@drawable/ic_action_add_point"
+            android:src="@drawable/rounded_service_point"
             app:fab_label="نقطة الخدمة" />
     </com.github.clans.fab.FloatingActionMenu>
 
@@ -289,14 +277,15 @@
         android:id="@+id/linear_layers_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_below="@id/rlLatLong"
-        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/border"
         android:clickable="true"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:focusable="true">
 
         <TextView
             android:id="@+id/tv_more_layer_info"
@@ -315,16 +304,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:orientation="vertical">
-
-            <CheckBox
-                android:id="@+id/cb_point_layer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="@string/feature_point_layer"
-                android:textStyle="bold"
-                android:visibility="gone"/>
+            android:orientation="vertical"
+            android:focusable="true">
 
             <TextView
                 android:id="@+id/tv_new_point"
@@ -332,7 +313,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="مربع توزيع"
-                android:drawableEnd="@drawable/ic_new_feature"
+                android:drawableEnd="@drawable/rounded_ic_dist_box"
                 android:drawablePadding="10dp" />
 
             <TextView
@@ -341,7 +322,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="عمود كهرباء"
-                android:drawableEnd="@drawable/ic_edit_feature"
+                android:drawableEnd="@drawable/rounded_ic_poles"
                 android:drawablePadding="10dp" />
 
             <TextView
@@ -350,24 +331,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="حلقة وحدة رئيسية"
-                android:drawableEnd="@drawable/ic_gcs_feature"
+                android:drawableEnd="@drawable/rounded_ic_rmu"
                 android:drawablePadding="10dp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:layout_margin="8dp"
-                android:background="#000"
-                android:visibility="gone" />
-
-            <CheckBox
-                android:id="@+id/cb_line_layer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="@string/feature_line_layer"
-                android:textStyle="bold"
-                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tv_new_line"
@@ -375,7 +340,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="محطة فرعية"
-                android:drawableEnd="@drawable/ic_new_feature"
+                android:drawableEnd="@drawable/rounded_ic_substation"
                 android:drawablePadding="10dp" />
 
             <TextView
@@ -384,34 +349,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="عداد كهرباء"
-                android:drawableEnd="@drawable/ic_edit_feature"
+                android:drawableEnd="@drawable/rounded_ocl_meter"
                 android:drawablePadding="10dp" />
-
-            <TextView
-                android:id="@+id/tv_gcs_line"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableEnd="@drawable/ic_gcs_feature"
-                android:drawablePadding="10dp"
-                android:visibility="gone" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:layout_margin="8dp"
-                android:background="#000"
-                android:visibility="gone" />
-
-
-            <CheckBox
-                android:id="@+id/cb_polygon_layer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="@string/feature_area_layer"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
 
             <TextView
                 android:id="@+id/tv_new_polygon"
@@ -419,24 +358,10 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:text="نقطة خدمة"
-                android:drawableEnd="@drawable/ic_new_feature"
+                android:drawableEnd="@drawable/rounded_service_point"
                 android:drawablePadding="10dp" />
 
-            <TextView
-                android:id="@+id/tv_edit_polygon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_edit_feature"
-                android:drawablePadding="10dp"
-                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tv_gcs_polygon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_gcs_feature"
-                android:drawablePadding="10dp"
-                android:visibility="gone" />
 
         </LinearLayout>
     </LinearLayout>
