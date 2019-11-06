@@ -235,7 +235,7 @@ public class GeoDatabaseUtil {
                         t = System.currentTimeMillis();
                         Log.i(TAG, "Feature Service Is Sync Enable" + " time = " + System.currentTimeMillis());
 
-                        if (fsInfo.getUrl().equals(activity.getResources().getString(R.string.gcs_feature_server))) {
+                        if (fsInfo.getUrl().equals(activity.getResources().getString(R.string.gcs_feature_server_test))) {
                             Log.i(TAG, "Feature Service :" + fsInfo.getUrl() + " time = " + System.currentTimeMillis());
 
                             createGeoDatabaseOffline(gdbTask, activity, mapView, fsInfo);

@@ -64,6 +64,13 @@ public class Utilities {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    public static boolean isWifiConnected(Context c) {
+        ConnectivityManager connManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return mWifi != null && mWifi.isConnected();
+
+    }
+
     public static void showLoadingDialog(Context context) {
         try {
             if (progressDialog != null && progressDialog.isShowing()) {
@@ -73,6 +80,22 @@ public class Utilities {
             progressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
             progressDialog.setCancelable(false);
             progressDialog.setMessage(context.getString(R.string.loading));
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void showFileLoadingDialog(Context context) {
+        try {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+            progressDialog = new ProgressDialog(context);
+            progressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            progressDialog.setCancelable(false);
+            progressDialog.setMessage(context.getString(R.string.loading_file));
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progressDialog.show();
         } catch (Exception e) {
@@ -194,7 +217,6 @@ public class Utilities {
      * Returns all available external SD-Card roots in the system
      *
      * @param context to access System Methods
-     *
      * @return paths to all available external SD-Card roots in the system
      */
     public static String[] getStorageDirectories(MapEditorActivity context) {

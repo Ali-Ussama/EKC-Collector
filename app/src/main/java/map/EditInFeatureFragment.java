@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -36,6 +37,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +57,8 @@ import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.map.AttachmentInfo;
 import com.esri.core.map.CallbackListener;
+import com.esri.core.map.CodedValueDomain;
+import com.esri.core.map.Domain;
 import com.esri.core.map.FeatureEditResult;
 import com.esri.core.map.FeatureType;
 import com.esri.core.map.Field;
@@ -71,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import activities.MapEditorActivity;
@@ -101,7 +106,7 @@ public class EditInFeatureFragment extends Fragment {
 
     EditText mCodeEt, mDeviceNumEt, mGeneratedCodeEt;
 
-
+    Spinner typesSpinner;
     HorizontalScrollView hsAttachments;
     ScrollView scrollAttributes;
     TextView tvAttachment;
@@ -116,6 +121,9 @@ public class EditInFeatureFragment extends Fragment {
     private CollectorMediaPlayer mPlayer = null;
     private String shapeType;
     private boolean isGcsShape;
+
+    private Map<String, String> types = null;
+    private ArrayList<String> typesList = null;
 
     private static final String JPG = "jpg";
     private static final String MP4 = "mp4";
@@ -152,6 +160,34 @@ public class EditInFeatureFragment extends Fragment {
                     featureLayer = editorActivity.selectedLayer;
                     featureLayerOffline = editorActivity.featureLayerPointsOffline;
                     shapeType = MapEditorActivity.POINT;
+//                    try {
+//                        if (((featureLayer.getField(ColumnNames.Type))) != null) {
+//
+//                            Log.i(TAG, "onAttach(): field type is not null");
+//
+//                            CodedValueDomain domain = ((CodedValueDomain) featureLayer.getField(ColumnNames.Type).getDomain());
+//                            types = domain.getCodedValues();
+//
+//
+//                        } else {
+//                            Log.i(TAG, "onAttach(): field type is null");
+//                        }
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//
+//                    try {
+//                        for (FeatureType type : featureLayer.getTypes()) {
+//                            try {
+//                                Log.i(TAG, "" + type.getName());
+//                                Log.i(TAG, "" + type.getDomains().size());
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
                 } else if (editorActivity.shapeToAdd[0].getGeometry() instanceof Polyline) {
                     featureLayer = editorActivity.lineFeatureLayer;
                     shapeType = MapEditorActivity.LINE;
@@ -392,7 +428,8 @@ public class EditInFeatureFragment extends Fragment {
             String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
             String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
 
-            createFile(pointName, pointFolderName, MP4);
+            createFile(pointName, pointFolderName, MP4, "VID");
+
             Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
             Uri contentUri = FileProvider.getUriForFile(getContext(), getString(R.string.app_package_name), mFileTemp);
             takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
@@ -409,12 +446,11 @@ public class EditInFeatureFragment extends Fragment {
 
             String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
             String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
-            createFile(pointName, pointFolderName, JPG);
+            createFile(pointName, pointFolderName, JPG, "IMG");
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             Uri photoURI = FileProvider.getUriForFile(editorActivity, getString(R.string.app_package_name), mFileTemp);
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-            editorActivity.startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_PICTURE);
-
+            startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_PICTURE);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -426,30 +462,171 @@ public class EditInFeatureFragment extends Fragment {
         String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
         String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
 
-        createFile(pointName, pointFolderName, JPG);
+        createFile(pointName, pointFolderName, JPG, "IMG");
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, REQUEST_CODE_GALLERY);
     }
 
 
-    private void createFile(String name, String layerFolderName, String extension) {
+    private void createFile(String name, String layerFolderName, String extension, String type) {
         try {
             Date d = new Date();
             TEMP_PHOTO_FILE_NAME = "Image_" + new SimpleDateFormat("dd_MM_yyyy", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension;
 
 
-            File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+            File rootFolder = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DCIM), IMAGE_FOLDER_NAME);
 
-            if (!mediaStorageDir.exists()) {
-                if (mediaStorageDir.mkdir()) {
-                    Log.i(TAG, "createFile(): mediaStorageDir director is created = " + mediaStorageDir.toString());
+            if (!rootFolder.exists()) {
+                if (rootFolder.mkdir()) {
+                    Log.i(TAG, "createFile(): rootFolder director is created = " + rootFolder.toString());
+                    try {
+                        File dateFolderName = new File(rootFolder, new SimpleDateFormat("dd_MM_yyyy", Locale.ENGLISH).format(d));
 
-                    File layerFolder = new File(mediaStorageDir.getPath(), layerFolderName);
+                        if (!dateFolderName.exists()) {
 
-                    if (!layerFolder.exists()) {
-                        if (layerFolder.mkdir()) {
+                            if (dateFolderName.mkdir()) {
+
+                                File layerFolder = new File(dateFolderName.getPath(), layerFolderName);
+
+                                if (!layerFolder.exists()) {
+                                    if (layerFolder.mkdir()) {
+                                        Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                                        File pointFolder = new File(layerFolder.getPath(), name);
+                                        if (!pointFolder.exists()) {
+                                            if (pointFolder.mkdir()) {
+
+                                                mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                                        type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                                Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                            } else {
+                                                Log.i(TAG, "createFile(): pointFolder director not created");
+                                            }
+                                        }
+                                    } else {
+                                        Log.i(TAG, "createFile(): layerFolder directory not created");
+                                    }
+                                }
+                            } else {
+                                Log.i(TAG, "createFile(): dateFolderName directory not created");
+                            }
+                        } else {
+                            File layerFolder = new File(rootFolder.getPath(), layerFolderName);
+
+                            if (!layerFolder.exists()) {
+                                if (layerFolder.mkdir()) {
+                                    Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                                    File pointFolder = new File(layerFolder.getPath(), name);
+                                    if (!pointFolder.exists()) {
+                                        if (pointFolder.mkdir()) {
+
+                                            mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                                    type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                            Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                        } else {
+                                            Log.i(TAG, "createFile(): pointFolder director not created");
+                                        }
+                                    }
+                                } else {
+                                    Log.i(TAG, "createFile(): layerFolder directory not created");
+                                }
+                            }
+
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.i(TAG, "createFile(): rootFolder director not created");
+                }
+            } else {
+
+                try {
+                    File dateFolderName = new File(rootFolder, new SimpleDateFormat("dd_MM_yyyy", Locale.ENGLISH).format(d));
+
+                    if (!dateFolderName.exists()) {
+
+                        if (dateFolderName.mkdir()) {
+
+                            File layerFolder = new File(dateFolderName.getPath(), layerFolderName);
+
+                            if (!layerFolder.exists()) {
+                                if (layerFolder.mkdir()) {
+                                    Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                                    File pointFolder = new File(layerFolder.getPath(), name);
+                                    if (!pointFolder.exists()) {
+                                        if (pointFolder.mkdir()) {
+
+                                            mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                                    type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                            Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                        } else {
+                                            Log.i(TAG, "createFile(): pointFolder director not created");
+
+                                        }
+                                    }
+                                } else {
+                                    Log.i(TAG, "createFile(): layerFolder directory not created");
+                                }
+                            } else {
+                                Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                                File pointFolder = new File(layerFolder.getPath(), name);
+                                if (!pointFolder.exists()) {
+                                    if (pointFolder.mkdir()) {
+
+                                        mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                                type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                        Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                    } else {
+                                        Log.i(TAG, "createFile(): pointFolder director not created");
+
+                                    }
+                                } else {
+                                    mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                            type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                    Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                }
+                            }
+                            Log.i(TAG, "createFile(): rootFolder director exists");
+
+                        } else {
+                            Log.i(TAG, "createFile(): dateFolderName directory not created");
+                        }
+                    } else {
+
+                        File layerFolder = new File(dateFolderName.getPath(), layerFolderName);
+
+                        if (!layerFolder.exists()) {
+                            if (layerFolder.mkdir()) {
+                                Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
+
+                                File pointFolder = new File(layerFolder.getPath(), name);
+                                if (!pointFolder.exists()) {
+                                    if (pointFolder.mkdir()) {
+
+                                        mFileTemp = new File(pointFolder.getPath() + File.separator +
+                                                type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
+
+                                        Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
+                                    } else {
+                                        Log.i(TAG, "createFile(): pointFolder director not created");
+
+                                    }
+                                }
+                            } else {
+                                Log.i(TAG, "createFile(): layerFolder directory not created");
+                            }
+                        } else {
                             Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
 
                             File pointFolder = new File(layerFolder.getPath(), name);
@@ -457,68 +634,29 @@ public class EditInFeatureFragment extends Fragment {
                                 if (pointFolder.mkdir()) {
 
                                     mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                            "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
+                                            type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
 
                                     Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
                                 } else {
                                     Log.i(TAG, "createFile(): pointFolder director not created");
+
                                 }
-                            }
-                        } else {
-                            Log.i(TAG, "createFile(): layerFolder directory not created");
-                        }
-                    }
-                } else {
-                    Log.i(TAG, "createFile(): mediaStorageDir director not created");
-                }
-            } else {
-                Log.i(TAG, "createFile(): mediaStorageDir director is created = " + mediaStorageDir.toString());
-
-                File layerFolder = new File(mediaStorageDir.getPath(), layerFolderName);
-
-                if (!layerFolder.exists()) {
-                    if (layerFolder.mkdir()) {
-                        Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
-
-                        File pointFolder = new File(layerFolder.getPath(), name);
-                        if (!pointFolder.exists()) {
-                            if (pointFolder.mkdir()) {
-
+                            } else {
                                 mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                        "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
+                                        type + "_" + new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "." + extension.trim());
 
                                 Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
-                            } else {
-                                Log.i(TAG, "createFile(): pointFolder director not created");
-
                             }
                         }
-                    } else {
-                        Log.i(TAG, "createFile(): layerFolder directory not created");
+                        Log.i(TAG, "createFile(): rootFolder director exists");
+
                     }
-                } else {
-                    Log.i(TAG, "createFile(): layerFolder directory is created = " + layerFolder.toString());
-
-                    File pointFolder = new File(layerFolder.getPath(), name);
-                    if (!pointFolder.exists()) {
-                        if (pointFolder.mkdir()) {
-
-                            mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                    "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
-
-                            Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
-                        } else {
-                            Log.i(TAG, "createFile(): pointFolder director not created");
-
-                        }
-                    } else {
-                        mFileTemp = new File(pointFolder.getPath() + File.separator +
-                                "IMG_" + new SimpleDateFormat("dd_MM_yyyy_HH_MM_SS", Locale.ENGLISH).format(d) + layerFolderName + "_" + name + "\\." + extension.trim());
-
-                        Log.i(TAG, "createFile(): pointFolder directory is created = " + pointFolder.toString());
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                Log.i(TAG, "createFile(): mediaStorageDir director exists");
+                Log.i(TAG, "createFile(): rootFolder director is created = " + rootFolder.toString());
+
+
             }
 
             // rename image...
@@ -577,12 +715,10 @@ public class EditInFeatureFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
         View view = inflater.inflate(R.layout.fragment_edit_in_feature, container, false);
 
         try {
             listAdapter.setFeatureSet(attributes);
-
 
             LinearLayout listView = (LinearLayout) view.findViewById(R.id.list_view);
             lnAttachments = (LinearLayout) view.findViewById(R.id.lnAttachments);
@@ -591,6 +727,21 @@ public class EditInFeatureFragment extends Fragment {
             tvAttachment = (TextView) view.findViewById(R.id.tvAttachment);
             mCodeEt = view.findViewById(R.id.mCodeEt);
             mDeviceNumEt = view.findViewById(R.id.device_num);
+
+//            try {
+//                typesSpinner = view.findViewById(R.id.type_spinner);
+//
+//                typesList = new ArrayList<>();
+//
+//                typesList.add(getString(R.string.type));
+//                typesList = (ArrayList<String>) types.values();
+//
+//                ArrayAdapter arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
+//                typesSpinner.setAdapter(arrayAdapter);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+
 //            mGeneratedCodeEt = view.findViewById(R.id.generated_code);
 //
 //        boolean focused = false;
@@ -1100,70 +1251,88 @@ public class EditInFeatureFragment extends Fragment {
     }
 
     private void addAttachmentToFeature(final File file) {
-        if (editorActivity != null) {
+        try {
+            Log.i(TAG, "addAttachmentToFeature(): is called");
 
-            Utilities.showLoadingDialog(editorActivity);
-            if (editorActivity.onlineData) {
-                featureLayer.addAttachment(featureId, file, new CallbackListener<FeatureEditResult>() {
-                    @Override
-                    public void onCallback(final FeatureEditResult featureEditResult) {
-                        Log.d("Attachment", "Done Add Attachments ");
-                        if (editorActivity != null) {
+            if (editorActivity != null) {
 
-                            editorActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    int attachmentId = (int) featureEditResult.getObjectId();
-                                    addAttachmentFileToView(file.getName(), attachmentId, file, true);
-                                    Utilities.dismissLoadingDialog();
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onError(final Throwable e) {
-                        e.printStackTrace();
-                        Log.d("Attachment", "Error In Add Attachments ");
-                        if (editorActivity != null) {
-
-                            editorActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Utilities.dismissLoadingDialog();
-//                                    Utilities.showToast(editorActivity, e.toString());
-                                    Utilities.showToast(editorActivity, getString(R.string.connection_failed));
-                                }
-                            });
-                        }
-                    }
-                });
-
-            } else {
-                try {
-                    featureTable.addAttachment(featureId, file, "Service", file.getName(), new CallbackListener<Long>() {
-                        @Override
-                        public void onCallback(final Long aLong) {
-                            if (aLong != -1) {
+                if (Utilities.isNetworkAvailable(editorActivity)) {
+                    Utilities.showFileLoadingDialog(editorActivity);
+                    if (editorActivity.onlineData) {
+                        featureLayer.addAttachment(featureId, file, new CallbackListener<FeatureEditResult>() {
+                            @Override
+                            public void onCallback(final FeatureEditResult featureEditResult) {
                                 Log.d("Attachment", "Done Add Attachments ");
                                 if (editorActivity != null) {
+
                                     editorActivity.runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            int attachmentId = aLong.intValue();
+                                            int attachmentId = (int) featureEditResult.getObjectId();
                                             addAttachmentFileToView(file.getName(), attachmentId, file, true);
                                             Utilities.dismissLoadingDialog();
                                         }
                                     });
                                 }
                             }
-                        }
 
-                        @Override
-                        public void onError(Throwable throwable) {
+                            @Override
+                            public void onError(final Throwable e) {
+                                e.printStackTrace();
+                                Log.d("Attachment", "Error In Add Attachments ");
+                                if (editorActivity != null) {
+
+                                    editorActivity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Utilities.dismissLoadingDialog();
+//                                    Utilities.showToast(editorActivity, e.toString());
+                                            Utilities.showToast(editorActivity, getString(R.string.connection_failed));
+                                        }
+                                    });
+                                }
+                            }
+                        });
+
+                    } else {
+                        try {
+                            featureTable.addAttachment(featureId, file, "Service", file.getName(), new CallbackListener<Long>() {
+                                @Override
+                                public void onCallback(final Long aLong) {
+                                    if (aLong != -1) {
+                                        Log.d("Attachment", "Done Add Attachments ");
+                                        if (editorActivity != null) {
+                                            editorActivity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    int attachmentId = aLong.intValue();
+                                                    addAttachmentFileToView(file.getName(), attachmentId, file, true);
+                                                    Utilities.dismissLoadingDialog();
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onError(Throwable throwable) {
+                                    Log.d("Attachment", "Error In Add Attachments ");
+                                    if (editorActivity != null) {
+
+                                        editorActivity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Utilities.dismissLoadingDialog();
+                                                Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
                             Log.d("Attachment", "Error In Add Attachments ");
                             if (editorActivity != null) {
-
                                 editorActivity.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -1173,21 +1342,11 @@ public class EditInFeatureFragment extends Fragment {
                                 });
                             }
                         }
-                    });
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    Log.d("Attachment", "Error In Add Attachments ");
-                    if (editorActivity != null) {
-                        editorActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Utilities.dismissLoadingDialog();
-                                Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
-                            }
-                        });
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -1271,16 +1430,19 @@ public class EditInFeatureFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        Log.i(TAG, "onActivityResult(): is called");
+        Log.i(TAG, "onActivityResult(): requestCode = " + requestCode);
+        Log.i(TAG, "onActivityResult(): resultCode = " + resultCode);
+
         if ((resultCode == Activity.RESULT_OK)) {
             switch (requestCode) {
                 case REQUEST_CODE_TAKE_PICTURE:
-
                     hsAttachments.setVisibility(View.VISIBLE);
                     tvAttachment.setText(getString(R.string.attachments));
                     saveFileToStorage(mFileTemp);
                     addAttachmentToFeature(mFileTemp);
                     break;
-
                 case REQUEST_CODE_GALLERY:
                     if (data != null) {
                         try {
@@ -1414,7 +1576,7 @@ public class EditInFeatureFragment extends Fragment {
         String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
         String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
 
-        createFile(pointName, pointFolderName, MP4);
+        createFile(pointName, pointFolderName, MP4, "AUD");
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);

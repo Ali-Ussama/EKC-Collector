@@ -2,7 +2,9 @@ package activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+
 import androidx.appcompat.app.ActionBar;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -1210,7 +1212,11 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            MapUtilites.zoomToPoint(mapView, shapeToAdd[0].getGeometry());
+                            try {
+                                MapUtilites.zoomToPoint(mapView, shapeToAdd[0].getGeometry());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }, 300);
                     hideFragment();
@@ -1806,7 +1812,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         super.onActivityResult(requestCode, resultCode, data);
         try {
             Log.i(TAG, "" + requestCode);
-            Toast.makeText(this, "requestCode = " + requestCode, Toast.LENGTH_LONG).show();
+//            Toast.makeText(this, "requestCode = " + requestCode, Toast.LENGTH_LONG).show();
 
             switch (requestCode) {
                 case 1:
@@ -1851,7 +1857,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     /**
-     * 4726124
      * ------------------------------Ali Ussama Update-------------------------------------------
      */
 
@@ -1909,6 +1914,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             Log.i(TAG, "loading label Rectangle");
 
             mapView.setMapOptions(mStreetMapOptions);
+
+            MapUtilites.zoomToExtent(mapView);
 //            mapView.addLayer(riyadhRectangle);
         } catch (Exception e) {
             e.printStackTrace();
@@ -2052,6 +2059,24 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 //        } else {
         initMap();
         refreshPOI();
+
+//        try {
+//            if (googleLocation != null) {
+//                Log.i(TAG, "getUserWorkingArea(): googleLocation not Null");
+//                mLocation = MapUtilites.getMapPoint(mapView, googleLocation);
+//                if (mLocation.getX() > 0 && mLocation.getY() > 0) {
+//                    Log.i(TAG, "getUserWorkingArea(): mLocation not Null");
+//
+//                    Point mapPoint = (Point) GeometryEngine.project(mLocation, SpatialReference.create(GLOBAL_SPATIAL_REFERENCE_CODE), mapView.getSpatialReference());
+//                    if (mapPoint != null && mapPoint.getX() > 0 && mapPoint.getY() > 0) {
+//                        Log.i(TAG, "getUserWorkingArea(): mapPoint not Null");
+//                        MapUtilites.zoomToPoint(mapView, mapPoint);
+//                    }
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 //        }
     }
 
@@ -2174,7 +2199,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 .show();
 
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -4048,6 +4072,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 Graphic graphic = new Graphic(mapPoint, locationSymbol);
                 userLocationGraphicLayer.removeAll();
                 userLocationGraphicLayer.addGraphic(graphic);
+
+//                MapUtilites.zoomToPoint(mapView, mapPoint);
             } else {
                 Log.i(TAG, "showUserLocationOnMap(): user Location Graphic Layer is null");
 
@@ -4084,7 +4110,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d("Location", location + "");
+        Log.i("Location", location + "");
         googleLocation = location;
 
         showUserLocationOnMap();

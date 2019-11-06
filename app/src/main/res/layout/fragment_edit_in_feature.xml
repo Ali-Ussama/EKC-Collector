@@ -16,36 +16,44 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#68a6d2"
-            android:paddingBottom="8dp"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp"
             android:paddingTop="8dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="8dp"
             android:text="@string/attributes"
             android:textColor="#ffffff"
             android:textSize="16sp"
             android:textStyle="bold" />
 
+<!--        <Spinner-->
+<!--            android:id="@+id/type_spinner"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="10dp"-->
+<!--            android:padding="4dp"-->
+<!--            android:prompt="@string/type" />-->
 
         <EditText
             android:id="@+id/mCodeEt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:hint="الكود"
-            android:inputType="number"/>
+            android:inputType="number" />
 
         <EditText
             android:id="@+id/device_num"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="رقم الجهاز"
-            android:inputType="text"/>
+            android:inputType="text" />
 
-<!--        <EditText-->
-<!--            android:id="@+id/generated_code"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:hint="الكود المصطنع"-->
-<!--            android:inputType="number"/>-->
+        <!--        <EditText-->
+        <!--            android:id="@+id/generated_code"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:hint="الكود المصطنع"-->
+        <!--            android:inputType="number"/>-->
 
         <LinearLayout
             android:id="@+id/list_view"
@@ -58,10 +66,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#68a6d2"
-            android:paddingBottom="8dp"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp"
             android:paddingTop="8dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="8dp"
             android:text="@string/attachments"
             android:textColor="#ffffff"
             android:textSize="16sp"
@@ -72,8 +80,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:paddingBottom="5dp"
-            android:paddingTop="5dp">
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
 
             <LinearLayout
                 android:id="@+id/lnAttachments"

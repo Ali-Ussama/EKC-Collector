@@ -9,6 +9,7 @@ import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.MultiPath;
 import com.esri.core.geometry.Point;
+import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 
@@ -44,6 +45,37 @@ public class MapUtilites {
 
 //            mMapView.setExtent(mapPoint, 20, true);
             mMapView.setExtent(envelope);
+
+//            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void zoomToExtent(MapView mMapView) {
+        try {
+            Log.i(TAG, "zoomToPoint(): is called");
+
+            Envelope envelope = new Envelope(3999182.5756, 2214971.278, 5662818.2357, 3459316.6497);
+
+            mMapView.setExtent(envelope);
+
+//            mapPoint = GeometryEngine.project(mapPoint, SpatialReference.create(MapEditorActivity.SPATIAL_REFERENCE_CODE), mMapView.getSpatialReference());
+//            mapPoint = GeometryEngine.project(mapPoint, SpatialReference.create(MapEditorActivity.GLOBAL_SPATIAL_REFERENCE_CODE), mMapView.getSpatialReference());
+//            if (mapPoint instanceof Point) {
+//                Point pointToZoom = (Point) mapPoint;
+//                int factor = 10;
+//                Envelope stExtent = new Envelope(pointToZoom.getX() - factor, pointToZoom.getY() - factor, pointToZoom.getX() + factor, pointToZoom.getY() + factor);
+//                mMapView.setExtent(stExtent, 10, true);
+//            } else
+
+//            if (mapPoint instanceof MultiPath) {
+            Log.i(TAG, "zoomToPoint(): setting extent");
+
+//            Envelope envelope = new Envelope(((Point) mapPoint).getX() - 100, ((Point) mapPoint).getY() - 100, ((Point) mapPoint).getX() + 100, ((Point) mapPoint).getY() + 100);
+
+//            mMapView.setExtent(mapPoint, 20, true);
+//            mMapView.setExtent(envelope);
 
 //            }
         } catch (Exception e) {
