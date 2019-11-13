@@ -76,6 +76,13 @@
     <string name="FeatureServiceToken" translatable="false">TMEE6lqp0mvBmoZkPeeLpb0TCLvOd6RIzXVr1oU5_JA.</string>
     <string name="GcsSatelliteToken" translatable="false">RxmJJAGcbuNb_T4lafPuguHIKAfrYVila_DhIkbE9mA.</string>
 
+    <string name="FCL_DISTRIBUTIONBOX_layer_name" translatable="false">EKC_Collector.DBO.FCL_DISTRIBUTIONBOX</string>
+    <string name="FCL_POLES_layer_name" translatable="false">EKC_Collector.DBO.FCL_POLES</string>
+    <string name="FCL_RMU_layer_name" translatable="false">EKC_Collector.DBO.FCL_RMU</string>
+    <string name="FCL_Substation_layer_name" translatable="false">EKC_Collector.DBO.FCL_Substation</string>
+    <string name="OCL_METER_layer_name" translatable="false">EKC_Collector.DBO.OCL_METER</string>
+    <string name="Service_Point_layer_name" translatable="false">EKC_Collector.DBO.Service_Point</string>
+
     <string name="point_feature_layer_name" translatable="false">GeoNames</string>
     <string name="line_feature_layer_name" translatable="false">NameExtendLine</string>
     <string name="polygon_feature_layer_name" translatable="false">NameExtendArea</string>

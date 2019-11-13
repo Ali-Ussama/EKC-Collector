@@ -72,7 +72,7 @@ public class GeoDatabaseUtil {
 
     private static final String TAG = "GeoDatabaseUtil";
     //    private static final String ROOT_GEO_DATABASE_PATH = "/farsi/OfflineEditor"; //Geo Database Tables (Service Layer)
-    private static final String ROOT_GEO_DATABASE_PATH = "/EKC_Collector/"; //Geo Database Tables (Service Layer)
+    private static final String ROOT_GEO_DATABASE_PATH = "/AJC_Collector/"; //Geo Database Tables (Service Layer)
 
     private static final String ROOT_BASE_MAP_PATH = "/farsi/BaseMap"; //Map Tiles (Base Map Images)
     private static GeodatabaseSyncTask gdbTask;
@@ -262,7 +262,7 @@ public class GeoDatabaseUtil {
         try {
             Log.i(TAG, "Downloading...");
 //            GenerateGeodatabaseParameters params = new GenerateGeodatabaseParameters(fsInfo, mapView.getExtent(), mapView.getSpatialReference(), null, true);
-            GenerateGeodatabaseParameters params = new GenerateGeodatabaseParameters(fsInfo, mapView.getExtent(), SpatialReference.create(MapEditorActivity.SPATIAL_REFERENCE_CODE), null, true);
+            GenerateGeodatabaseParameters params = new GenerateGeodatabaseParameters(fsInfo, mapView.getExtent(), SpatialReference.create(MapEditorActivity.SPATIAL_REFERENCE_CODE), null, false);
 
             params.setOutSpatialRef(fsInfo.getSpatialReference());
 
@@ -344,6 +344,7 @@ public class GeoDatabaseUtil {
         Log.i(TAG, "addLocalLayers(): Add features layers from Local Geo Database");
 
         Geodatabase geodatabase;
+
         try {
 
 //            String databasePath = activity.getFilesDir().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + databaseNumber + "/offlinedata.geodatabase";
@@ -358,15 +359,57 @@ public class GeoDatabaseUtil {
             for (GeodatabaseFeatureTable gdbFeatureTable : geodatabase.getGeodatabaseTables()) {
                 if (gdbFeatureTable.hasGeometry()) {
                     Log.i(TAG, "addLocalLayers(): gdb Feature Table has geometry");
-//                    if (gdbFeatureTable.getFeatureServiceLayerName().equals(activity.getString(R.string.point_feature_layer_name))) {
-                    if (gdbFeatureTable.getFeatureServiceLayerName().equals("EKC_Collector.DBO.FCL_POLES")) {
-                        activity.featureLayerPointsOffline = new FeatureLayer(gdbFeatureTable);
-                        activity.featureTablePoints = ((GeodatabaseFeatureTable) activity.featureLayerPointsOffline.getFeatureTable());
-                        Log.i(TAG, "addLocalLayers(): LayerName is GeoNames");
-                        Log.i(TAG, "addLocalLayers(): LayerName is EKC_Collector.DBO.FCL_POLES");
-                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.featureTablePoints.getTableName());
 
-                    } else if (gdbFeatureTable.getFeatureServiceLayerName().equals(activity.getString(R.string.line_feature_layer_name))) {
+                    if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.FCL_DISTRIBUTIONBOX_layer_name))) {
+                        activity.FCL_DISTRIBUTIONBOXLayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.FCL_DISTRIBUTIONBOXTable = ((GeodatabaseFeatureTable) activity.FCL_DISTRIBUTIONBOXLayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.FCL_DISTRIBUTIONBOXGraphicsLayer);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.FCL_DISTRIBUTIONBOXTable.getTableName());
+
+                    } else if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.FCL_POLES_layer_name))) {
+                        activity.FCL_POLESLayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.FCL_POLESTable = ((GeodatabaseFeatureTable) activity.FCL_POLESLayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.FCL_POLESLayerOffline);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.FCL_POLESTable.getTableName());
+
+                    } else if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.FCL_RMU_layer_name))) {
+                        activity.FCL_RMULayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.FCL_RMUTable = ((GeodatabaseFeatureTable) activity.FCL_RMULayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.FCL_RMULayerOffline);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.FCL_RMUTable.getTableName());
+
+                    } else if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.FCL_Substation_layer_name))) {
+                        activity.FCL_SubstationLayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.FCL_SubstationTable = ((GeodatabaseFeatureTable) activity.FCL_SubstationLayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.FCL_SubstationLayerOffline);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.FCL_SubstationTable.getTableName());
+
+                    } else if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.OCL_METER_layer_name))) {
+                        activity.OCL_METERLayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.OCL_METERTable = ((GeodatabaseFeatureTable) activity.OCL_METERLayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.OCL_METERLayerOffline);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.OCL_METERTable.getTableName());
+
+                    } else if (gdbFeatureTable.getFeatureServiceLayerName().matches(activity.getString(R.string.Service_Point_layer_name))) {
+                        activity.Service_PointLayerOffline = new FeatureLayer(gdbFeatureTable);
+                        activity.Service_PointTable = ((GeodatabaseFeatureTable) activity.Service_PointLayerOffline.getFeatureTable());
+                        mapView.addLayer(activity.Service_PointLayerOffline);
+
+                        Log.i(TAG, "addLocalLayers(): LayerName is " + activity.Service_PointTable.getTableName());
+
+                    }
+
+
+
+
+
+
+                    /*else if (gdbFeatureTable.getFeatureServiceLayerName().equals(activity.getString(R.string.line_feature_layer_name))) {
                         activity.featureLayerLinesOffline = new FeatureLayer(gdbFeatureTable);
                         activity.featureTableLines = ((GeodatabaseFeatureTable) activity.featureLayerLinesOffline.getFeatureTable());
                         Log.i(TAG, "addLocalLayers(): LayerName is NameExtendLine");
@@ -379,21 +422,37 @@ public class GeoDatabaseUtil {
 
                         mapView.addLayer(new FeatureLayer(gdbFeatureTable));
 
-                    }
+                    }*/
                 }
             }
 
 //            mapView.setMaxExtent(activity.featureTableLines.getExtent());
-            mapView.setExtent(activity.featureTableLines.getExtent());
+            Envelope mapExtent = null;
+            if (activity.FCL_DISTRIBUTIONBOXTable != null && activity.FCL_DISTRIBUTIONBOXTable.getExtent() != null) {
+                mapExtent = activity.FCL_DISTRIBUTIONBOXTable.getExtent();
+            } else if (activity.FCL_POLESTable != null && activity.FCL_POLESTable.getExtent() != null) {
+                mapExtent = activity.FCL_POLESTable.getExtent();
+            } else if (activity.FCL_RMUTable != null && activity.FCL_RMUTable.getExtent() != null) {
+                mapExtent = activity.FCL_RMUTable.getExtent();
+            } else if (activity.FCL_SubstationTable != null && activity.FCL_SubstationTable.getExtent() != null) {
+                mapExtent = activity.FCL_SubstationTable.getExtent();
+            } else if (activity.OCL_METERTable != null && activity.OCL_METERTable.getExtent() != null) {
+                mapExtent = activity.OCL_METERTable.getExtent();
+            } else if (activity.Service_PointTable != null && activity.Service_PointTable.getExtent() != null) {
+                mapExtent = activity.Service_PointTable.getExtent();
+            }
+
+            if (mapExtent != null)
+                mapView.setExtent(mapExtent);
 
 
-            SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.GREEN, 3, SimpleLineSymbol.STYLE.SOLID);
-            if (activity.offlineGraphicLayer == null)
-                activity.offlineGraphicLayer = new GraphicsLayer();
-
-            mapView.addLayer(activity.offlineGraphicLayer);
-            activity.offlineGraphicLayer.removeAll();
-            activity.offlineGraphicLayer.addGraphic(new Graphic(activity.featureTableLines.getExtent(), lineSymbol));
+//            SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.GREEN, 3, SimpleLineSymbol.STYLE.SOLID);
+//            if (activity.offlineGraphicLayer == null)
+//                activity.offlineGraphicLayer = new GraphicsLayer();
+//
+//            mapView.addLayer(activity.offlineGraphicLayer);
+//            activity.offlineGraphicLayer.removeAll();
+//            activity.offlineGraphicLayer.addGraphic(new Graphic(activity.featureTableLines.getExtent(), lineSymbol));
 
 
             activity.runOnUiThread(new Runnable() {
@@ -406,7 +465,7 @@ public class GeoDatabaseUtil {
                             activity.endDrawOnMap();
                         activity.item_load_previous_offline.setVisible(true);
                         activity.menuItemOffline.setVisible(false);
-                        activity.menuItemIndex.setVisible(false);
+//                        activity.menuItemIndex.setVisible(false);
 //                        activity.menuItemGCS.setVisible(false);
                         activity.menuItemSatellite.setVisible(false);
 //                        activity.menuItemBaseMap.setVisible(false);
@@ -437,6 +496,8 @@ public class GeoDatabaseUtil {
         } catch (FileNotFoundException e) {
             Log.i(TAG, "Error in adding feature layers from Local Geo Database");
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -451,7 +512,7 @@ public class GeoDatabaseUtil {
         });
 
         if (gdbTask == null) {
-            gdbTask = new GeodatabaseSyncTask(activity.getResources().getString(R.string.gcs_feature_server), MapEditorActivity.featureServiceToken);
+            gdbTask = new GeodatabaseSyncTask(activity.getResources().getString(R.string.gcs_feature_server_test), MapEditorActivity.featureServiceToken);
             gdbTask.fetchFeatureServiceInfo(new CallbackListener<FeatureServiceInfo>() {
 
                 @Override
@@ -495,7 +556,7 @@ public class GeoDatabaseUtil {
             Log.d(TAG, "Getting Local Geo database " + localDatabaseNumber);
 
 //            String databasePath = activity.getFilesDir().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + localDatabaseNumber + "/offlinedata.geodatabase";
-            String databasePath = Environment.getExternalStorageDirectory().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + localDatabaseNumber + "/offlinedata.gdb";
+            String databasePath = Environment.getExternalStorageDirectory().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + localDatabaseNumber + "/offlinedata.geodatabase";
 
             Geodatabase gdb = new Geodatabase(databasePath);
 

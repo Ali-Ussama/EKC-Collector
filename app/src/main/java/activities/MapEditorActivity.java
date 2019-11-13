@@ -29,7 +29,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 
 import android.util.Log;
@@ -54,10 +53,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
 import com.esri.android.map.CalloutPopupWindow;
@@ -162,12 +159,12 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     public FragmentManager fragmentManager;
     public GraphicsLayer userLocationGraphicLayer, offlineGraphicLayer, workingAreaGraphicLayer, labelsLayer;
-    public GraphicsLayer pointFeatuersGraphicsLayer, polygonFeatuersGraphicsLayer, lineFeatuersGraphicsLayer;
+    public GraphicsLayer FCL_DISTRIBUTIONBOXGraphicsLayer, FCL_POLESGraphicsLayer, FCL_RMUGraphicsLayer, FCL_SubstationGraphicsLayer, Service_PointGraphicsLayer, OCL_METERGraphicsLayer, pointFeatuersGraphicsLayer, polygonFeatuersGraphicsLayer, lineFeatuersGraphicsLayer;
 
     public boolean onlineData = true, isFragmentShown, isAddNew, changeLocationOnline, isInOnlineAddingMode;
-    public FeatureLayer featureLayerPointsOffline, featureLayerLinesOffline, featureLayerPolygonsOffline;
+    public FeatureLayer FCL_DISTRIBUTIONBOXLayerOffline, FCL_POLESLayerOffline, FCL_RMULayerOffline, FCL_SubstationLayerOffline, Service_PointLayerOffline, OCL_METERLayerOffline, featureLayerPointsOffline, featureLayerLinesOffline, featureLayerPolygonsOffline;
     public boolean isInDrawMood;
-    public GeodatabaseFeatureTable featureTablePoints, featureTableLines, featureTablePolygons;
+    public GeodatabaseFeatureTable FCL_DISTRIBUTIONBOXTable, FCL_POLESTable, FCL_RMUTable, FCL_SubstationTable, Service_PointTable, OCL_METERTable, featureTablePoints, featureTableLines, featureTablePolygons;
     public GraphicsLayer drawGraphicLayer;
     public Graphic[] shapeToAdd;
     PictureMarkerSymbol locationSymbol;
@@ -184,10 +181,14 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     boolean isFullScreenMode;
 
     int queryCount = 0;
-    Query query;
+
+    Query onlineQuery;
+    QueryParameters offlineQuery;
+
     /**
      * ----------------------------------Query All Callback--------------------------------------
      **/
+
     private CallbackListener<FeatureSet> distributionBoxQueryAllCallBack = new CallbackListener<FeatureSet>() { //TODO queryAllCallBack Error
         private int errorCount = 0;
         private int successCount = 0;
@@ -291,7 +292,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         Utilities.dismissLoadingDialog();
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
 
-                        FCL_POLES.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, polesQueryAllCallBack);
+                        FCL_POLES.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, polesQueryAllCallBack);
 
                     }
                 });
@@ -412,7 +413,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
 
-                        FCL_RMU.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, rmuQueryAllCallBack);
+                        FCL_RMU.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, rmuQueryAllCallBack);
 
 
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
@@ -535,7 +536,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         successCount = 0;
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
-                        FCL_Substation.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, substationQueryAllCallBack);
+                        FCL_Substation.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, substationQueryAllCallBack);
 
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
@@ -657,7 +658,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
 
-                        OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, oclMeterQueryAllCallBack);
+                        OCL_METER.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, oclMeterQueryAllCallBack);
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
                 });
@@ -778,7 +779,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         queryResults = null;
                         Utilities.dismissLoadingDialog();
 
-                        Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, servicePointQueryAllCallBack);
+                        Service_Point.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, servicePointQueryAllCallBack);
 
 //                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
                     }
@@ -921,6 +922,9 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
      * ----------------------------------Query All Callback--------------------------------------
      **/
 
+    /**
+     * ----------------------------------Query Attachments Callback--------------------------------------
+     **/
     private CallbackListener<AttachmentInfo[]> distributionBoxAttachmentCallbackOnline = new CallbackListener<AttachmentInfo[]>() {
         @Override
         public void onCallback(AttachmentInfo[] attachmentInfo) {
@@ -1060,6 +1064,332 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
      * ----------------------------------Query Attachments Callback--------------------------------------
      **/
 
+    /**
+     * ---------------------------------Query All Offline Callback----------------------------------------
+     */
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackFCLDistributionBox = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            try {
+                errorCount++;
+                Log.i(TAG, "queryAllOfflineCallBackFCLDistributionBox(): Error: " + errorCount);
+//                if (errorCount == 3) {
+//                    selectFeaturesCallBackOffline.onError(e);
+                e.printStackTrace();
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+//                }
+
+                FCL_POLESLayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackFCLPoles);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackFCLDistributionBox(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackFCLDistributionBox(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (queryCount == 1 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = FCL_DISTRIBUTIONBOXLayerOffline;
+                selectedTableOffline = FCL_DISTRIBUTIONBOXTable;
+
+            } else if (queryCount == 1 && this.queryResults == null || this.queryResults.isEmpty()) {
+                FCL_POLESLayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackFCLPoles);
+            }
+
+//            Log.i("ResponseForAll", "Success: " + successCount);
+        }
+    };
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackFCLPoles = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            errorCount++;
+            Log.i(TAG, "queryAllOfflineCallBackFCLPoles(): Error: " + errorCount);
+//            if (errorCount == 3) {
+//            selectFeaturesCallBackOffline.onError(e);
+            e.printStackTrace();
+            this.queryResults = null;
+            errorCount = 0;
+            successCount = 0;
+
+//        }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackFCLPoles(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackFCLPoles(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (queryCount == 2 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = FCL_POLESLayerOffline;
+                selectedTableOffline = FCL_POLESTable;
+
+            } else if (queryCount == 2 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                FCL_RMULayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackFCLRmu);
+            }
+
+//            Log.d("ResponseForAll", "Success: " + successCount);
+        }
+    };
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackFCLRmu = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            errorCount++;
+            Log.i(TAG, "queryAllOfflineCallBackFCLRmu(): Error: " + errorCount);
+//            if (errorCount == 3) {
+//            selectFeaturesCallBackOffline.onError(e);
+            this.queryResults = null;
+            errorCount = 0;
+            successCount = 0;
+//            }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackFCLRmu(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackFCLRmu(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (queryCount == 3 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = FCL_RMULayerOffline;
+                selectedTableOffline = FCL_RMUTable;
+
+            } else if (queryCount == 3 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                FCL_SubstationLayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackFCLSubstation);
+            }
+
+//            Log.d("ResponseForAll", "Success: " + successCount);
+        }
+    };
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackFCLSubstation = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            errorCount++;
+            Log.i(TAG, "queryAllOfflineCallBackFCLSubstation(): Error: " + errorCount);
+//            if (errorCount == 3) {
+//            selectFeaturesCallBackOffline.onError(e);
+            this.queryResults = null;
+            errorCount = 0;
+            successCount = 0;
+//            }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackFCLSubstation(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackFCLSubstation(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (queryCount == 4 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = FCL_SubstationLayerOffline;
+                selectedTableOffline = FCL_SubstationTable;
+
+            } else if (queryCount == 4 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                OCL_METERLayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackOCLMeter);
+            }
+
+        }
+    };
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackOCLMeter = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            errorCount++;
+            Log.i(TAG, "queryAllOfflineCallBackOCLMeter(): Error: " + errorCount);
+//            if (errorCount == 3) {
+//                selectFeaturesCallBackOffline.onError(e);
+            this.queryResults = null;
+            errorCount = 0;
+            successCount = 0;
+//            }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackOCLMeter(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackOCLMeter(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+//            if (
+//            if ((successCount + errorCount) == 3) {
+            if (queryCount == 5 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = OCL_METERLayerOffline;
+                selectedTableOffline = OCL_METERTable;
+
+            } else if (queryCount == 5 && (this.queryResults == null || this.queryResults.isEmpty())) {
+                Service_PointLayerOffline.selectFeatures(offlineQuery, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackServicePoint);
+            }
+        }
+    };
+
+    CallbackListener<FeatureResult> queryAllOfflineCallBackServicePoint = new CallbackListener<FeatureResult>() {
+        private int errorCount = 0;
+        private int successCount = 0;
+        private ArrayList<FeatureResult> queryResults;
+
+        public void onError(final Throwable e) {
+            errorCount++;
+            Log.i(TAG, "queryAllOfflineCallBackServicePoint(): Error: " + errorCount);
+//            if (errorCount == 3) {
+//            selectFeaturesCallBackOffline.onError(e);
+            this.queryResults = null;
+            errorCount = 0;
+            successCount = 0;
+//            }
+        }
+
+        public void onCallback(FeatureResult queryResults) {
+
+
+            successCount++;
+            queryCount++;
+
+            if (queryResults != null) {
+                if (this.queryResults == null)
+                    this.queryResults = new ArrayList<>();
+                this.queryResults.add(queryResults);
+            }
+
+            try {
+                Log.i(TAG, "queryAllOfflineCallBackServicePoint(): onCallback is called");
+
+                if (queryResults != null)
+                    Log.i(TAG, "queryAllOfflineCallBackServicePoint(): onCallback queryResults size = " + this.queryResults.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+//            if ((successCount + errorCount) == 3) {
+            if (queryCount == 6 && this.queryResults != null && !this.queryResults.isEmpty()) {
+                processSelectQueryResultOffline(this.queryResults);
+                this.queryResults = null;
+                errorCount = 0;
+                successCount = 0;
+
+                selectedLayerOffline = Service_PointLayerOffline;
+                selectedTableOffline = Service_PointTable;
+
+            } else if (queryCount == 6 && this.queryResults == null || this.queryResults.isEmpty()) {
+//                Utilities.showToast(this,"");
+
+            }
+
+            Log.i("ResponseForAll", "Success: " + successCount);
+        }
+    };
+
+    /**
+     * ---------------------------------Query All Offline Callback----------------------------------------
+     */
 
     private CallbackListener<FeatureEditResult[][]> addShapeCallBack = new CallbackListener<FeatureEditResult[][]>() {
         @Override
@@ -1353,6 +1683,10 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         }
     };
 
+    /**
+     * -----------------------------Table Query Callbacks------------------------------------------
+     */
+
     private CallbackListener<FeatureResult> callbackOfflineQuery = new CallbackListener<FeatureResult>() {
         @Override
         public void onCallback(FeatureResult results) {
@@ -1380,6 +1714,173 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         }
     };
 
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryFCLDistributionBox = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        FCL_DISTRIBUTIONBOXGraphicsLayer.addGraphic(getGraphic(feature));
+//                        if (feature.getGeometry() instanceof Point) {
+//                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+//                        } else if (feature.getGeometry() instanceof Polygon) {
+//                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+//                        } else {
+//                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+//                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryFCLPoles = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        if (feature.getGeometry() instanceof Point) {
+                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else if (feature.getGeometry() instanceof Polygon) {
+                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else {
+                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryFCLRMU = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        if (feature.getGeometry() instanceof Point) {
+                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else if (feature.getGeometry() instanceof Polygon) {
+                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else {
+                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryFCLSubstation = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        if (feature.getGeometry() instanceof Point) {
+                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else if (feature.getGeometry() instanceof Polygon) {
+                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else {
+                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryOCLMeter = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        if (feature.getGeometry() instanceof Point) {
+                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else if (feature.getGeometry() instanceof Polygon) {
+                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else {
+                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    private CallbackListener<FeatureResult> callbackTableOfflineQueryServicePoint = new CallbackListener<FeatureResult>() {
+        @Override
+        public void onCallback(FeatureResult results) {
+
+            if (results != null) {
+                for (Object e : results) {
+                    if (e instanceof Feature) {
+                        Log.i("callbackOfflineQuery", "callbackOfflineQuery");
+                        final Feature feature = (Feature) e;
+                        if (feature.getGeometry() instanceof Point) {
+                            pointFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else if (feature.getGeometry() instanceof Polygon) {
+                            polygonFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        } else {
+                            lineFeatuersGraphicsLayer.addGraphic(getGraphic(feature));
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    };
+
+    /**
+     * -----------------------------Table Query Callbacks------------------------------------------
+     */
+
     private SeekBar.OnSeekBarChangeListener seekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -1401,6 +1902,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
         }
     };
+
     private Index selectedWorkIndex;
 
     @BindView(R.id.rlFragment)
@@ -1442,43 +1944,29 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @BindView(R.id.fabFullScreen)
     public FloatingActionButton fabFullScreen;
 
-    //    @BindView(R.id.item_go_online)
     public MenuItem menuItemOnline;
 
-    //    @BindView(R.id.item_load_previous)
     public MenuItem menuItemLoad;
 
-    //    @BindView(R.id.item_sync)
     public MenuItem menuItemSync;
 
-    //    @BindView(R.id.fabFullScreen)
     public MenuItem menuItemIndex;
 
-    //    @BindView(R.id.item_go_offline)
     public MenuItem menuItemOffline;
 
-    //    @BindView(R.id.item_load_previous_offline)
     public MenuItem item_load_previous_offline;
 
-    //    @BindView(R.id.overflow)
     public MenuItem menuItemOverflow;
 
-//    @BindView(R.id.fabFullScreen)
-//    public MenuItem menuItemSearch;
-
-    //    @BindView(R.id.item_satellite)
+    //    public MenuItem menuItemSearch;
     public MenuItem menuItemSatellite;
 
-    //    @BindView(R.id.item_base_map)
 //    public MenuItem menuItemBaseMap;
 
-    //    @BindView(R.id.fabFullScreen)
     public MenuItem menuItemGCS;
 
-    //    @BindView(R.id.item_go_offline_mode)
     public MenuItem menuItemGoOfflineMode;
 
-    //    @BindView(R.id.item_go_online_mode)
     public MenuItem menuItemGoOnlineMode;
 
     @BindView(R.id.sb_esri_satalite_opacity)
@@ -1772,9 +2260,9 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         }
     }
 
-    /**
-     *  ------------------------------Ali Ussama Update--------------------------------------------
-     * */
+/**
+ *  ------------------------------Ali Ussama Update--------------------------------------------
+ * */
     /**
      * Loads Raster file (Extension -> .TIF ) and adds it to a new RasterLayer. The RasterLayer is then added
      * to the map as an operational layer. Map viewpoint is then set based on the Raster's geometry.
@@ -1947,6 +2435,9 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         }
     }
 
+    /**
+     * Updated By Ali Ussama 7/11/2019
+     */
     public void mapInitialized() {
         try {
 
@@ -1957,11 +2448,15 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             workingAreaGraphicLayer = new GraphicsLayer();
             mapView.addLayer(workingAreaGraphicLayer);
 
+            initGraphicLayers(); // TODO Init Graphic Layers
+
             pointFeatuersGraphicsLayer = new GraphicsLayer();
             lineFeatuersGraphicsLayer = new GraphicsLayer();
             polygonFeatuersGraphicsLayer = new GraphicsLayer();
             labelsLayer = new GraphicsLayer();
             mapView.addLayer(labelsLayer);
+
+
             mapView.addLayer(pointFeatuersGraphicsLayer);
             mapView.addLayer(lineFeatuersGraphicsLayer);
             mapView.addLayer(polygonFeatuersGraphicsLayer);
@@ -2046,6 +2541,27 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             });
 
             getUserWorkingArea();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initGraphicLayers() {
+        try {
+            FCL_DISTRIBUTIONBOXGraphicsLayer = new GraphicsLayer();//TODO Offline
+            FCL_POLESGraphicsLayer = new GraphicsLayer();//TODO Offline
+            FCL_RMUGraphicsLayer = new GraphicsLayer();//TODO Offline
+            FCL_SubstationGraphicsLayer = new GraphicsLayer();//TODO Offline
+            OCL_METERGraphicsLayer = new GraphicsLayer();//TODO Offline
+            Service_PointGraphicsLayer = new GraphicsLayer();//TODO Offline
+
+            mapView.addLayer(FCL_DISTRIBUTIONBOXGraphicsLayer);//TODO Offline
+            mapView.addLayer(FCL_POLESGraphicsLayer);//TODO Offline
+            mapView.addLayer(FCL_RMUGraphicsLayer);//TODO Offline
+            mapView.addLayer(FCL_SubstationGraphicsLayer);//TODO Offline
+            mapView.addLayer(OCL_METERGraphicsLayer);//TODO Offline
+            mapView.addLayer(Service_PointGraphicsLayer);//TODO Offline
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -2230,7 +2746,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             if (!onlineData) {
                 item_load_previous_offline.setVisible(true);
                 menuItemOffline.setVisible(false);
-                menuItemIndex.setVisible(false);
+//                menuItemIndex.setVisible(false);
 //            menuItemGCS.setVisible(false);
                 menuItemSatellite.setVisible(false);
 //                menuItemBaseMap.setVisible(false);
@@ -2490,8 +3006,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         GeoDatabaseUtil.addLocalLayers(mapView, context, selectedVersion);// TODO un comment
                         currentOfflineVersion = selectedVersion; // TODO un comment
 //                        GeoDatabaseUtil.setMapExtentFromFeatureExtent(mapView,context,currentOfflineVersion);
-                        GeoDatabaseUtil.loadRaster(mapView, context);
-
+//                        GeoDatabaseUtil.loadRaster(mapView, context);
+                        refreshPOI();
                     }
                 }).setCancelable(true)
                 .setPositiveButton(context.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -2672,16 +3188,53 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         for (Layer layer : mapView.getLayers()) {
             if (layer instanceof FeatureLayer) {
 
-                if (layer.getName().equals(getString(R.string.point_feature_layer_name))) {
-                    featureLayerPointsOffline = (FeatureLayer) layer;
-                    featureTablePoints = ((GeodatabaseFeatureTable) featureLayerPointsOffline.getFeatureTable());
-                } else if (layer.getName().equals(getString(R.string.line_feature_layer_name))) {
-                    featureLayerLinesOffline = (FeatureLayer) layer;
-                    featureTableLines = ((GeodatabaseFeatureTable) featureLayerLinesOffline.getFeatureTable());
-                } else if (layer.getName().equals(getString(R.string.polygon_feature_layer_name))) {
-                    featureLayerPolygonsOffline = (FeatureLayer) layer;
-                    featureTablePolygons = ((GeodatabaseFeatureTable) featureLayerPolygonsOffline.getFeatureTable());
+                if (layer.getName().matches(getString(R.string.FCL_DISTRIBUTIONBOX_layer_name))) {
+                    FCL_DISTRIBUTIONBOXLayerOffline = (FeatureLayer) layer;
+                    FCL_DISTRIBUTIONBOXTable = ((GeodatabaseFeatureTable) FCL_DISTRIBUTIONBOXLayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + FCL_DISTRIBUTIONBOXTable.getTableName());
+
+                } else if (layer.getName().matches(getString(R.string.FCL_POLES_layer_name))) {
+                    FCL_POLESLayerOffline = (FeatureLayer) layer;
+                    FCL_POLESTable = ((GeodatabaseFeatureTable) FCL_POLESLayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + FCL_POLESTable.getTableName());
+
+                } else if (layer.getName().matches(getString(R.string.FCL_RMU_layer_name))) {
+                    FCL_RMULayerOffline = (FeatureLayer) layer;
+                    FCL_RMUTable = ((GeodatabaseFeatureTable) FCL_RMULayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + FCL_RMUTable.getTableName());
+
+                } else if (layer.getName().matches(getString(R.string.FCL_Substation_layer_name))) {
+                    FCL_SubstationLayerOffline = (FeatureLayer) layer;
+                    FCL_SubstationTable = ((GeodatabaseFeatureTable) FCL_SubstationLayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + FCL_SubstationTable.getTableName());
+
+                } else if (layer.getName().matches(getString(R.string.OCL_METER_layer_name))) {
+                    OCL_METERLayerOffline = (FeatureLayer) layer;
+                    OCL_METERTable = ((GeodatabaseFeatureTable) OCL_METERLayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + OCL_METERTable.getTableName());
+
+                } else if (layer.getName().matches(getString(R.string.Service_Point_layer_name))) {
+                    Service_PointLayerOffline = (FeatureLayer) layer;
+                    Service_PointTable = ((GeodatabaseFeatureTable) Service_PointLayerOffline.getFeatureTable());
+
+                    Log.i(TAG, "getFeatureServiceOffline(): LayerName is " + Service_PointTable.getTableName());
+
                 }
+//                if (layer.getName().equals(getString(R.string.point_feature_layer_name))) {
+//                    featureLayerPointsOffline = (FeatureLayer) layer;
+//                    featureTablePoints = ((GeodatabaseFeatureTable) featureLayerPointsOffline.getFeatureTable());
+//                } else if (layer.getName().equals(getString(R.string.line_feature_layer_name))) {
+//                    featureLayerLinesOffline = (FeatureLayer) layer;
+//                    featureTableLines = ((GeodatabaseFeatureTable) featureLayerLinesOffline.getFeatureTable());
+//                } else if (layer.getName().equals(getString(R.string.polygon_feature_layer_name))) {
+//                    featureLayerPolygonsOffline = (FeatureLayer) layer;
+//                    featureTablePolygons = ((GeodatabaseFeatureTable) featureLayerPolygonsOffline.getFeatureTable());
+//                }
 
             }
         }
@@ -2802,15 +3355,22 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             } else {
                 Toast.makeText(this, shapeType, Toast.LENGTH_SHORT).show();
                 try {
-                    if (featureLayerPointsOffline == null || featureLayerPolygonsOffline == null || featureLayerLinesOffline == null) {
+//                    if (featureLayerPointsOffline == null || featureLayerPolygonsOffline == null || featureLayerLinesOffline == null) {
+
+                    if (FCL_DISTRIBUTIONBOXLayerOffline == null || FCL_POLESLayerOffline == null || FCL_RMULayerOffline == null ||
+                            FCL_SubstationLayerOffline == null || OCL_METERLayerOffline == null || Service_PointLayerOffline == null) {
                         getFeatureServiceOffline();
                     }
 
                     Geometry envelope;
                     long objId;
                     if (shapeType.equals(POINT)) {
-                        featureTablePoints = ((GeodatabaseFeatureTable) featureLayerPointsOffline.getFeatureTable());
-                        objId = featureLayerPointsOffline.getFeatureTable().addFeature(shapeToAdd[0]);
+
+//                        featureTablePoints = ((GeodatabaseFeatureTable) featureLayerPointsOffline.getFeatureTable());
+//                        addNewFeatureOfflineOnLayer();
+
+                        selectedTableOffline = ((GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable());
+                        objId = selectedLayerOffline.getFeatureTable().addFeature(shapeToAdd[0]);
                         Point pointOfTap = (Point) shapeToAdd[0].getGeometry();
                         Geometry featureExtent = GeometryEngine.project(mapView.getExtent(), mapView.getSpatialReference(), LAYER_SR);
                         double currentMapWidth = featureExtent.calculateLength2D();
@@ -2852,6 +3412,12 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void addNewFeatureOfflineOnLayer() {
+        if (selectedLayerOffline.equals(FCL_DISTRIBUTIONBOXLayerOffline)) {
+            selectedTableOffline = ((GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable());
         }
     }
 
@@ -2907,7 +3473,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     private void getFeatureAndShowEditFragment(Geometry pointOfTap, long featureId, final boolean isNew) {
         try {
 
-            Log.i(TAG, "getFeatureAndShowEditFragment(): ");
+            Log.i(TAG, "getFeatureAndShowEditFragment(): is called");
             isNewFeature = isNew;
 
 //            LAYER_SR = SpatialReference.create(GLOBAL_SPATIAL_REFERENCE_CODE);
@@ -2922,14 +3488,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             Log.i(TAG, "getFeatureAndShowEditFragment(): two Pixels = " + twoPixels);
 
             if (onlineData) {
+                Log.i(TAG, "getFeatureAndShowEditFragment(): status for query is online");
+
                 Utilities.showLoadingDialog(MapEditorActivity.this);
-                query = new Query();
-                query.setOutFields(new String[]{"*"});
+                onlineQuery = new Query();
+                onlineQuery.setOutFields(new String[]{"*"});
                 // query.setWhere((ColumnNames.SURVEYOR_ID + " = " + DataCollectionApplication.getSurveyorId()) + " OR " + (ColumnNames.SURVEYOR_ID + " is null " + " OR " + (ColumnNames.SURVEYOR_ID + " = 0 ")));
-                query.setWhere("1=1");
+                onlineQuery.setWhere("1=1");
 
                 if (featureId != -1) {
-                    query.setObjectIds(new long[]{featureId});
+                    onlineQuery.setObjectIds(new long[]{featureId});
                     Log.i(TAG, "getFeatureAndShowEditFragment(): featureId = " + featureId);
                 }
                 if (pointOfTap != null) {
@@ -2937,20 +3505,20 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                         Envelope envelope = new Envelope(((Point) pointOfTap).getX() - twoPixels, ((Point) pointOfTap).getY() - twoPixels, ((Point) pointOfTap).getX() + twoPixels, ((Point) pointOfTap).getY() + twoPixels);
 //                        Envelope envelope = new Envelope(((Point) pointOfTap), 1000.0, 1000.0);
 
-                        query.setGeometry(envelope);
+                        onlineQuery.setGeometry(envelope);
                         Log.i(TAG, "getFeatureAndShowEditFragment(): geometry is created  x = " + envelope.getCenter().getX() + " Y = " + envelope.getCenter().getY());
 
                     } else {
-                        query.setGeometry(pointOfTap);
+                        onlineQuery.setGeometry(pointOfTap);
                     }
                 }
-                query.setSpatialRelationship(SpatialRelationship.INTERSECTS);
+                onlineQuery.setSpatialRelationship(SpatialRelationship.INTERSECTS);
 //                String [] outfields = new String[]{"Code", "OBJECTID","GlobalID"};
 //              query.setOutFields("*");
                 if (shapeType == null) {
                     Log.i(TAG, "getFeatureAndShowEditFragment query all callback");
 
-                    queryOnAllLayersOnline(query);
+                    queryOnAllLayersOnline(onlineQuery);
                     shapeType = POINT;
                 } else if (shapeType.equals(POINT)) {
 
@@ -2959,34 +3527,35 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
                     if (selectedLayer != null) {
                         if (selectedLayer.equals(FCL_DISTRIBUTIONBOX)) {
-                            FCL_DISTRIBUTIONBOX.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            FCL_DISTRIBUTIONBOX.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         } else if (selectedLayer.equals(FCL_POLES)) {
-                            FCL_POLES.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            FCL_POLES.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         } else if (selectedLayer.equals(FCL_RMU)) {
-                            FCL_RMU.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            FCL_RMU.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         } else if (selectedLayer.equals(FCL_Substation)) {
-                            FCL_Substation.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            FCL_Substation.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         } else if (selectedLayer.equals(OCL_METER)) {
-                            OCL_METER.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            OCL_METER.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         } else if (selectedLayer.equals(Service_Point)) {
-                            Service_Point.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                            Service_Point.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
 
                         }
                     } else {
-                        queryOnAllLayersOnline(query);
+                        queryOnAllLayersOnline(onlineQuery);
                     }
                 } else if (shapeType.equals(POLYGON)) {
                     Log.i(TAG, "getFeatureAndShowEditFragment polygonFeatureLayer callback");
-                    polygonFeatureLayer.selectFeatures(query, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
+                    polygonFeatureLayer.selectFeatures(onlineQuery, ArcGISFeatureLayer.SELECTION_METHOD.NEW, selectFeaturesCallBackOnline);
                 }
             } else {
 //                double currentMapWidth = mapView.getExtent().calculateLength2D();
 //                double fivePixels = currentMapWidth / 70;
+                Log.i(TAG, "getFeatureAndShowEditFragment(): status for query is offline");
 
                 QueryParameters query = new QueryParameters();
                 query.setOutSpatialReference(mapView.getSpatialReference());
@@ -3045,43 +3614,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     private void queryOnAllLayersOffline(final QueryParameters query) {
-        CallbackListener<FeatureResult> queryAllCallBack = new CallbackListener<FeatureResult>() {
-            private int errorCount = 0;
-            private int successCount = 0;
-            private ArrayList<FeatureResult> queryResults;
+        queryCount = 0;
+        offlineQuery = query;
+        FCL_DISTRIBUTIONBOXLayerOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackFCLDistributionBox);
 
-            public void onError(final Throwable e) {
-                errorCount++;
-                Log.d("ResponseForAll", "Error: " + errorCount);
-                if (errorCount == 3) {
-                    selectFeaturesCallBackOffline.onError(e);
-                    this.queryResults = null;
-                    errorCount = 0;
-                    successCount = 0;
-                }
-            }
-
-            public void onCallback(FeatureResult queryResults) {
-                successCount++;
-                if (queryResults != null) {
-                    if (this.queryResults == null)
-                        this.queryResults = new ArrayList<>();
-                    this.queryResults.add(queryResults);
-                }
-
-                if ((successCount + errorCount) == 3) {
-                    processSelectQueryResultOffline(this.queryResults);
-                    this.queryResults = null;
-                    errorCount = 0;
-                    successCount = 0;
-                }
-
-                Log.d("ResponseForAll", "Success: " + successCount);
-            }
-        };
-        featureLayerLinesOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllCallBack);
-        featureLayerPointsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllCallBack);
-        featureLayerPolygonsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllCallBack);
+//        featureLayerLinesOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackDistributionBox);
+//        featureLayerPointsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackDistributionBox);
+//        featureLayerPolygonsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, queryAllOfflineCallBackDistributionBox);
 
     }
 
@@ -3194,78 +3733,96 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     private void processSelectQueryResultOffline(ArrayList<FeatureResult> listQueryResults) {
+        try {
+            boolean noFeatures = true;
 
-        boolean noFeatures = true;
+            final ArrayList<String> names = new ArrayList<>();
+            final ArrayList<String> nameFeaturesIndex = new ArrayList<>();
+            final HashMap<String, Feature> featureHashMap = new HashMap<>();
 
-        final ArrayList<String> names = new ArrayList<>();
-        final ArrayList<String> nameFeaturesIndex = new ArrayList<>();
-        final HashMap<String, Feature> featureHashMap = new HashMap<>();
-
-        for (int i = 0; i < listQueryResults.size(); i++) {
-            FeatureResult results = listQueryResults.get(i);
-            int j = 0;
-            for (Object element : results) {
-                if (element instanceof Feature) {
-                    noFeatures = false;
-                    Feature feature = (Feature) element;
-                    String str = (String) feature.getAttributes().get(ColumnNames.ANAME);
-                    if (str == null || str.isEmpty())
-                        str = "No Name";
-
-
-                    str += "  ( " + feature.getGeometry().getType().name() + " ) ";
-
-                    names.add(str);
-
-                    //To Store Feature Index and graphic Index
-                    nameFeaturesIndex.add(i + "," + j);
-                    featureHashMap.put(i + "," + j, feature);
+            try {
+                if (listQueryResults != null) {
+                    Log.i(TAG, "processSelectQueryResultOffline(): listQueryResult size = " + listQueryResults.size());
                 }
-                j++;
-            }
-        }
 
-        if (noFeatures) {
-            Log.i(TAG, "processSelectQueryResultOffline");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
-                }
-            });
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (names.size() == 1) {
-                        showSelectedFeature(featureHashMap.get(nameFeaturesIndex.get(0)), isNewFeature);
-                    } else {
-                        String[] array = names.toArray(new String[0]);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(MapEditorActivity.this);
-                        builder.setTitle("Choose Service To Edit");
-                        builder.setCancelable(true);
-                        builder.setItems(array, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Utilities.showLoadingDialog(MapEditorActivity.this);
-                                    }
-                                });
-                                //get Feature Index and graphic Index
-                                String key = nameFeaturesIndex.get(which);
-                                showSelectedFeature(featureHashMap.get(key), isNewFeature);
+                for (int i = 0; i < listQueryResults.size(); i++) {
+                    FeatureResult results = listQueryResults.get(i);
+                    int j = 0;
+                    try {
+                        Log.i(TAG, "processSelectQueryResultOffline(): FeatureResult at index " + i + " size = " + listQueryResults.size());
+                        Log.i(TAG, "processSelectQueryResultOffline(): FeatureResult at index " + i + " feature Count = " + results.featureCount());
+                        Log.i(TAG, "processSelectQueryResultOffline(): FeatureResult at index " + i + " Field Name = " + results.getDisplayFieldName());
+                        Log.i(TAG, "processSelectQueryResultOffline(): FeatureResult at index " + i + " Object Id Field Name = " + results.getObjectIdFieldName());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
-                            }
-                        });
-                        builder.setNegativeButton("Cancel", null);
-                        builder.show();
+                    for (Object element : results) {
+                        if (element instanceof Feature) {
+                            noFeatures = false;
+                            Feature feature = (Feature) element;
+                            String str = String.valueOf(feature.getAttributes().get(ColumnNames.Code));
+                            if (str == null || str.isEmpty())
+                                str = "No Name";
+
+                            str += "  ( " + feature.getGeometry().getType().name() + " ) ";
+
+                            names.add(str);
+
+                            //To Store Feature Index and graphic Index
+                            nameFeaturesIndex.add(i + "," + j);
+                            featureHashMap.put(i + "," + j, feature);
+                        }
+                        j++;
                     }
                 }
-            });
-        }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
+            if (noFeatures) {
+                Log.i(TAG, "processSelectQueryResultOffline");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Utilities.showToast(MapEditorActivity.this, getString(R.string.no_service_found));
+                    }
+                });
+            } else {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (names.size() == 1) {
+                            showSelectedFeature(featureHashMap.get(nameFeaturesIndex.get(0)), isNewFeature);
+                        } else {
+                            String[] array = names.toArray(new String[0]);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MapEditorActivity.this);
+                            builder.setTitle("Choose Service To Edit");
+                            builder.setCancelable(true);
+                            builder.setItems(array, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Utilities.showLoadingDialog(MapEditorActivity.this);
+                                        }
+                                    });
+                                    //get Feature Index and graphic Index
+                                    String key = nameFeaturesIndex.get(which);
+                                    showSelectedFeature(featureHashMap.get(key), isNewFeature);
+
+                                }
+                            });
+                            builder.setNegativeButton("Cancel", null);
+                            builder.show();
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -3346,19 +3903,26 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
     private void selectFeatureOfflineAndShowDetails(QueryParameters query) {
 
+        Log.i(TAG, "selectFeatureOfflineAndShowDetails(): is called");
         if (featureLayerPointsOffline == null || featureLayerPolygonsOffline == null || featureLayerLinesOffline == null) {
+            Log.i(TAG, "selectFeatureOfflineAndShowDetails(): calling getFeatureServiceOffline() ");
             getFeatureServiceOffline();
         }
 
         if (shapeType == null) {
+            shapeType = POINT;
+            Log.i(TAG, "selectFeatureOfflineAndShowDetails(): calling queryOnAllLayersOffline() ");
             queryOnAllLayersOffline(query);
         } else if (shapeType.equals(LINE))
             featureLayerLinesOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, selectFeaturesCallBackOffline);
         else if (shapeType.equals(POINT)) {
-            featureLayerPointsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, selectFeaturesCallBackOffline);
+            Log.i(TAG, "selectFeatureOfflineAndShowDetails(): calling queryOnAllLayersOffline() ");
 
-        } else if (shapeType.equals(POLYGON))
+            queryOnAllLayersOffline(query);
+
+        } else if (shapeType.equals(POLYGON)) {
             featureLayerPolygonsOffline.selectFeatures(query, FeatureLayer.SelectionMode.NEW, selectFeaturesCallBackOffline);
+        }
     }
 
     public void showSelectedFeature(final Feature feature, final boolean isNewFeature) {
@@ -3386,9 +3950,11 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             final int objId = (int) feature.getId();
             this.selectedObjectId = objId;
 
-            if (shapeToAdd[0].getGeometry() instanceof Point)
-                featureTablePoints.queryAttachmentInfos(objId, attachmentCallbackOffline);
-            else if (shapeToAdd[0].getGeometry() instanceof Polyline)
+            if (shapeToAdd[0].getGeometry() instanceof Point) {
+//                featureTablePoints.queryAttachmentInfos(objId, attachmentCallbackOffline);
+                selectedTableOffline.queryAttachmentInfos(objId, attachmentCallbackOffline); // TODO New 13/11/2019
+
+            } else if (shapeToAdd[0].getGeometry() instanceof Polyline)
                 featureTableLines.queryAttachmentInfos(objId, attachmentCallbackOffline);
             else if (shapeToAdd[0].getGeometry() instanceof Polygon) {
                 featureTablePolygons.queryAttachmentInfos(objId, attachmentCallbackOffline);
@@ -3688,14 +4254,16 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 }
 
 
-            }
-            /*else {
+            } else {
 
-                attrs.put(featureTableLines.getObjectIdField(), listAdapter.attributes.get(featureTableLines.getObjectIdField()));
                 try {
+                    attrs.put(selectedTableOffline.getObjectIdField(), shapeToAdd[0].getAttributes().get("OBJECTID"));
 
                     if (shapeToAdd[0].getGeometry() instanceof Point) {
-                        featureTablePoints.updateFeature((long) listAdapter.attributes.get(featureTableLines.getObjectIdField()), attrs, shapeToAdd[0].getGeometry());
+
+//                        featureTablePoints.updateFeature((long) listAdapter.attributes.get(featureTableLines.getObjectIdField()), attrs, shapeToAdd[0].getGeometry());
+                        selectedTableOffline.updateFeature((long) listAdapter.attributes.get(selectedTableOffline.getObjectIdField()), attrs, shapeToAdd[0].getGeometry());
+
                     } else if (shapeToAdd[0].getGeometry() instanceof Polyline) {
                         featureTableLines.updateFeature((long) listAdapter.attributes.get(featureTableLines.getObjectIdField()), attrs, shapeToAdd[0].getGeometry());
                     } else if (shapeToAdd[0].getGeometry() instanceof Polygon) {
@@ -3717,7 +4285,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                     typeToRefresh = POLYGON;
                 }
                 refreshPOI();
-            }*/
+            }
 //            } else {
 //                hideFragment();
 //                String typeToRefresh = null;
@@ -3746,8 +4314,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     }
 
     public void goOffline() {
-        // get By Hanan 332457.7771338887 this value old version
-        // get By Ali 700000.00 this value latest version 26/9/2018
+// get By Hanan 332457.7771338887 this value old version
+// get By Ali 700000.00 this value latest version 26/9/2018
 //        if (!onlineData || mapView.getScale() <= 700000.0) {
 
 
@@ -3995,7 +4563,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     protected void createLocationRequest() {
         if (!isRequestBefore) {
             isRequestBefore = true;
-            //getting the last location of the user
+//getting the last location of the user
             @SuppressLint("MissingPermission")
             Location userLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
@@ -4005,7 +4573,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             }
 
 
-            // to get updates of the location incase the user is moved on from his last location
+// to get updates of the location incase the user is moved on from his last location
             final LocationRequest mLocationRequest = new LocationRequest();
             mLocationRequest.setInterval(10000);
             mLocationRequest.setFastestInterval(5000);
@@ -4238,9 +4806,17 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 if (featureTablePolygons == null)
                     Log.i(TAG, "featureTablePolygons is null");
 
-                featureTablePoints.queryFeatures(query, callbackOfflineQuery);
-                featureTableLines.queryFeatures(query, callbackOfflineQuery);
-                featureTablePolygons.queryFeatures(query, callbackOfflineQuery);
+
+                FCL_DISTRIBUTIONBOXTable.queryFeatures(query, callbackTableOfflineQueryFCLDistributionBox);
+                FCL_POLESTable.queryFeatures(query, callbackTableOfflineQueryFCLPoles);
+                FCL_RMUTable.queryFeatures(query, callbackTableOfflineQueryFCLRMU);
+                FCL_SubstationTable.queryFeatures(query, callbackTableOfflineQueryFCLSubstation);
+                OCL_METERTable.queryFeatures(query, callbackTableOfflineQueryOCLMeter);
+                Service_PointTable.queryFeatures(query, callbackTableOfflineQueryServicePoint);
+
+//                featureTablePoints.queryFeatures(query, callbackOfflineQuery);
+//                featureTableLines.queryFeatures(query, callbackOfflineQuery);
+//                featureTablePolygons.queryFeatures(query, callbackOfflineQuery);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -4503,7 +5079,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         }
 
     }
-
 
     private class AsyncQueryTaskForPoints extends AsyncTask<QueryParameters, Void, FeatureResult> {
 
@@ -4793,7 +5368,7 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
         Graphic graphic = null;
         try {
 
-            String name = String.valueOf(feature.getAttributes().get("ENGLISHN"));
+            String name = String.valueOf(feature.getAttributes().get("OBJECTID"));
 
             String type = String.valueOf(feature.getGeometry().getType().value());
 
@@ -4944,6 +5519,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     private static String shapeType = null;
 
     public ArcGISFeatureLayer selectedLayer = null;
+    public FeatureLayer selectedLayerOffline = null;
+    public GeodatabaseFeatureTable selectedTableOffline;
 
     private ActionMode.Callback addShapeActionModeCallback = new ActionMode.Callback() {
         public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
@@ -5024,26 +5601,38 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
                 if (v.getId() == R.id.fab_add_distribution_box) {
                     shapeType = POINT;
                     selectedLayer = FCL_DISTRIBUTIONBOX;
+                    selectedLayerOffline = FCL_DISTRIBUTIONBOXLayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 } else if (v.getId() == R.id.fab_add_poles) {
                     shapeType = POINT;
                     selectedLayer = FCL_POLES;
+                    selectedLayerOffline = FCL_POLESLayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 } else if (v.getId() == R.id.fab_add_rmu) {
                     shapeType = POINT;
                     selectedLayer = FCL_RMU;
+                    selectedLayerOffline = FCL_RMULayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 } else if (v.getId() == R.id.fab_add_sub_station) {
                     shapeType = POINT;
                     selectedLayer = FCL_Substation;
+                    selectedLayerOffline = FCL_SubstationLayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 } else if (v.getId() == R.id.fab_add_ocl_meter) {
                     shapeType = POINT;
                     selectedLayer = OCL_METER;
+                    selectedLayerOffline = OCL_METERLayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 } else if (v.getId() == R.id.fab_add_service_point) {
                     shapeType = POINT;
                     selectedLayer = Service_Point;
+                    selectedLayerOffline = Service_PointLayerOffline;
+                    selectedTableOffline = (GeodatabaseFeatureTable) selectedLayerOffline.getFeatureTable();
                     addShapeActionMode = startActionMode(addShapeActionModeCallback);
                 }
 

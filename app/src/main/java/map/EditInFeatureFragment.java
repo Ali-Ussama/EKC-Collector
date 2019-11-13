@@ -158,7 +158,7 @@ public class EditInFeatureFragment extends Fragment {
 
                 if (editorActivity.shapeToAdd[0].getGeometry() instanceof Point) {
                     featureLayer = editorActivity.selectedLayer;
-                    featureLayerOffline = editorActivity.featureLayerPointsOffline;
+                    featureLayerOffline = editorActivity.selectedLayerOffline;
                     shapeType = MapEditorActivity.POINT;
 //                    try {
 //                        if (((featureLayer.getField(ColumnNames.Type))) != null) {
@@ -444,8 +444,21 @@ public class EditInFeatureFragment extends Fragment {
     private void takePicture() {
         try {
 
-            String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
-            String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+            String pointName;
+            try {
+                pointName = String.valueOf(editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID"));
+            } catch (Exception e) {
+                e.printStackTrace();
+                pointName = "1"; // TODO Remove
+            }
+            String pointFolderName;
+
+            if (editorActivity.onlineData)
+                pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+            else {
+                pointFolderName = (editorActivity.selectedLayerOffline.getName().split("\\.")[2]);
+            }
+
             createFile(pointName, pointFolderName, JPG, "IMG");
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             Uri photoURI = FileProvider.getUriForFile(editorActivity, getString(R.string.app_package_name), mFileTemp);
@@ -460,8 +473,12 @@ public class EditInFeatureFragment extends Fragment {
     private void openGallery() {
 
         String pointName = editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID").toString();
-        String pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
-
+        String pointFolderName;
+        if (editorActivity.onlineData)
+            pointFolderName = (editorActivity.selectedLayer.getName().split("\\.")[2]);
+        else {
+            pointFolderName = (editorActivity.selectedLayerOffline.getName().split("\\.")[2]);
+        }
         createFile(pointName, pointFolderName, JPG, "IMG");
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
