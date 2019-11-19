@@ -95,6 +95,7 @@ import com.esri.core.table.FeatureTable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import util.CollectorMediaPlayer;
+import util.OConstants;
 import util.Utilities;
 import util.ZoomableImageView;
 
@@ -136,6 +137,10 @@ public class EditInFeatureFragment extends Fragment {
 
     private Map<String, String> types = null;
     private ArrayList<String> typesList = null;
+    private CodedValueDomain damageDomain;
+    private HashMap<String, String> codeValue;
+    private ArrayList<String> codeList;
+
 
     private static final String JPG = "jpg";
     private static final String MP4 = "mp4";
@@ -203,6 +208,7 @@ public class EditInFeatureFragment extends Fragment {
                                 typesList.addAll(damageDomain.getCodedValues().values());
                                 arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
                                 typesSpinner.setAdapter(arrayAdapter);
+
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -284,11 +290,11 @@ public class EditInFeatureFragment extends Fragment {
                 } else if (editorActivity.shapeToAdd[0].getGeometry() instanceof Polyline) {
                     featureLayer = editorActivity.lineFeatureLayer;
                     shapeType = MapEditorActivity.LINE;
-                    featureLayerOffline = editorActivity.featureLayerLinesOffline;
+                    featureLayerOffline = editorActivity.selectedLayerOffline;
                 } else if (editorActivity.shapeToAdd[0].getGeometry() instanceof Polygon) {
                     featureLayer = editorActivity.polygonFeatureLayer;
                     shapeType = MapEditorActivity.POLYGON;
-                    featureLayerOffline = editorActivity.featureLayerPolygonsOffline;
+                    featureLayerOffline = editorActivity.selectedLayerOffline;
                 }
 
 
@@ -296,6 +302,8 @@ public class EditInFeatureFragment extends Fragment {
                     listAdapter = new AttributeViewsBuilder(editorActivity, getFields(featureLayer.getFields()), featureLayer.getTypes(), ColumnNames.E_FEATURETYPE);
                 } else {
                     featureTable = ((GeodatabaseFeatureTable) featureLayerOffline.getFeatureTable());
+                    editorActivity.selectedTableOffline = featureTable;
+
                     listAdapter = new AttributeViewsBuilder(editorActivity, getFields(featureTable.getFields().toArray(new Field[0])), featureTable.getFeatureTypes().toArray(new FeatureType[0]), featureTable.getTypeIdField());
                 }
             } else {
@@ -311,12 +319,12 @@ public class EditInFeatureFragment extends Fragment {
     private void initFeatureServiceTable(GeodatabaseFeatureServiceTable featureServiceTable) {
         try {
 
-            if (featureLayerOffline != null && featureLayerOffline.getFeatureTable() != null){
+            if (featureLayerOffline != null && featureLayerOffline.getFeatureTable() != null) {
                 Field typeField = featureLayerOffline.getFeatureTable().getField(ColumnNames.Type);
 //                    Field causeField = featureServiceTable.getField(CAUSE_FIELD_NAME);
 
                 // Retrieve the possible domain values for each field and add to the spinner data adapters.
-                CodedValueDomain damageDomain = (CodedValueDomain) typeField.getDomain();
+                damageDomain = (CodedValueDomain) typeField.getDomain();
 
                 try {
 
@@ -330,9 +338,20 @@ public class EditInFeatureFragment extends Fragment {
                         public void run() {
                             try {
                                 typesList = new ArrayList<>();
+                                codeList = new ArrayList<>();
+                                codeValue = new HashMap<>();
+
                                 typesList.add(getString(R.string.type));
 
-                                typesList.addAll(damageDomain.getCodedValues().keySet());
+
+                                typesList.addAll(damageDomain.getCodedValues().values());
+                                codeList.addAll(damageDomain.getCodedValues().keySet());
+
+                                for (String code : damageDomain.getCodedValues().keySet()) {
+                                    Log.i(TAG, "initFeatureServiceTable(): domain Code = " + code);
+                                    Log.i(TAG, "initFeatureServiceTable(): domain Value = " + damageDomain.getCodedValues().get(code));
+                                    codeValue.put(damageDomain.getCodedValues().get(code), code);
+                                }
                                 arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
                                 typesSpinner.setAdapter(arrayAdapter);
                             } catch (Exception e) {
@@ -908,14 +927,23 @@ public class EditInFeatureFragment extends Fragment {
 
 //                mFeatureTable = new GeodatabaseFeatureServiceTable(getString(R.string.gcs_feature_server_test), MapEditorActivity.featureServiceToken, (int) featureLayer.getID());
 //                mFeatureTable.setSpatialReference(editorActivity.mapView.getSpatialReference());
+                if (!editorActivity.onlineData) {
+                    initFeatureServiceTable(mFeatureTable);
+                } else {
+                    HashMap<String, String> tempCodeValue = OConstants.getDomain(featureLayer.getName());
+                    typesList = new ArrayList<>();
+                    codeList = new ArrayList<>();
+                    codeValue = new HashMap<>();
+                    typesList.addAll(tempCodeValue.values());
+                    codeList.addAll(tempCodeValue.keySet());
 
-                initFeatureServiceTable(mFeatureTable);
-//                typesList.add(getString(R.string.type));
+                    for (String code : tempCodeValue.keySet()) {
+                        codeValue.put(tempCodeValue.get(code), code);
+                    }
+                    arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
+                    typesSpinner.setAdapter(arrayAdapter);
+                }
 //
-//                typesList = (ArrayList<String>) types.values();
-//
-//                arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
-//                typesSpinner.setAdapter(arrayAdapter);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1125,16 +1153,30 @@ public class EditInFeatureFragment extends Fragment {
 
     public void saveChanges(AttributeViewsBuilder listAdapter) {
         try {
+            Log.i(TAG, "saveChanges(): is called");
             if (mListener != null) {
+                Log.i(TAG, "saveChanges(): Listener not null");
 
                 if (mCodeEt.getText() == null || mCodeEt.getText().toString().trim().isEmpty()) {
                     mCodeEt.setError("مطلوب");
                 } else if (mDeviceNumEt.getText() == null || mDeviceNumEt.getText().toString().trim().isEmpty()) {
                     mDeviceNumEt.setError("مطلوب");
-                } /*else if (mGeneratedCodeEt.getText() == null || mGeneratedCodeEt.getText().toString().trim().isEmpty()) {
-                mGeneratedCodeEt.setError("مطلوب");
-            } */ else {
-                    mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), String.valueOf(attributes.get(ColumnNames.ObjectID)));
+                } else if (typesList != null && !typesList.isEmpty() && typesSpinner.getSelectedItemPosition() == 0) {
+                    Log.i(TAG, "saveChanges(): typeList not null");
+                    if (typesSpinner.getSelectedItemPosition() == 0) {
+                        Log.i(TAG, "saveChanges(): selected type position 0");
+                        Utilities.showToast(editorActivity, "من فضلك اختر نوع النقطة");
+                    }
+                } else {
+                    String typeCode = "";
+                    try {
+                        typeCode = codeValue.get(typesSpinner.getSelectedItem().toString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    Log.i(TAG, "saveChanges(): typeCode = " + typeCode);
+
+                    mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), String.valueOf(attributes.get(ColumnNames.ObjectID)), typeCode);
                 }
             }
         } catch (Exception e) {
@@ -1796,7 +1838,7 @@ public class EditInFeatureFragment extends Fragment {
     }
 
     public interface EditorFragmentListener {
-        void onSave(AttributeViewsBuilder listAdapter, String code, String deviceID, String GlobalID);
+        void onSave(AttributeViewsBuilder listAdapter, String code, String deviceID, String domainCode, String GlobalID);
 
         void onDelete(int featureId);
 
