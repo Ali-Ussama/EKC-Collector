@@ -12,7 +12,7 @@ import com.esri.core.map.Feature;
 
 import java.util.ArrayList;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 public class DistrictsAdapter extends ArrayAdapter<Feature> {
 

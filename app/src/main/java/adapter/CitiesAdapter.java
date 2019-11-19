@@ -11,7 +11,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import data.City;
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 public class CitiesAdapter extends ArrayAdapter<City> {
 

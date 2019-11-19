@@ -7,7 +7,7 @@ android {
         ndk {
             abiFilters "armeabi", "armeabi-v7a", "x86", "mips"
         }
-        applicationId 'com.gcs.riyadh'
+        applicationId 'com.ekc.collector'
         minSdkVersion 19 /*Targeting devices from kitkat and greater*/
         targetSdkVersion 28
         versionCode 7

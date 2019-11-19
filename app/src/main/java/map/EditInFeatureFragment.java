@@ -8,8 +8,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
+import android.media.ExifInterface;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
@@ -47,10 +51,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.esri.android.map.AttachmentManager;
 import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.ags.ArcGISFeatureLayer;
+import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
@@ -72,6 +79,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -81,8 +89,11 @@ import java.util.Objects;
 import activities.MapEditorActivity;
 import activities.VideoActivity;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
+import com.esri.core.table.FeatureTable;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import util.CollectorMediaPlayer;
 import util.Utilities;
 import util.ZoomableImageView;
@@ -106,11 +117,12 @@ public class EditInFeatureFragment extends Fragment {
 
     EditText mCodeEt, mDeviceNumEt, mGeneratedCodeEt;
 
-    Spinner typesSpinner;
     HorizontalScrollView hsAttachments;
     ScrollView scrollAttributes;
     TextView tvAttachment;
     FeatureLayer featureLayerOffline;
+    FeatureLayer featureLayerForTable;
+
     GeodatabaseFeatureTable featureTable;
     private AttachmentInfo[] attachmentInfo;
     private HashMap<String, Object> attributes;
@@ -128,6 +140,86 @@ public class EditInFeatureFragment extends Fragment {
     private static final String JPG = "jpg";
     private static final String MP4 = "mp4";
 
+    @BindView(R.id.offline_attachments_recycler_view)
+    RecyclerView mOfflineAttachmentsRV;
+
+    @BindView(R.id.object_id)
+    TextView mObjectIDTV;
+    @BindView(R.id.type_spinner)
+    Spinner typesSpinner;
+
+    private ArrayList<File> adapterData;
+    private OfflineAttachmentRVAdapter mOfflineAttachmentRVAdapter;
+
+    private ArrayAdapter arrayAdapter;
+
+    CallbackListener<GeodatabaseFeatureServiceTable.Status> mInitFeatureServiceTableListener = new CallbackListener<GeodatabaseFeatureServiceTable.Status>() {
+
+        @Override
+        public void onError(Throwable ex) {
+//                    showToast("Error initializing FeatureServiceTable");
+            ex.getStackTrace();
+        }
+
+        @Override
+        public void onCallback(GeodatabaseFeatureServiceTable.Status arg0) {
+            try {
+
+//                if (arg0.equals(GeodatabaseFeatureServiceTable.Status.INITIALIZED)) {
+                Log.i(TAG, "initFeatureServiceTable(): onCallback(): status = " + arg0);
+                // Create a FeatureLayer from the initialized GeodatabaseFeatureServiceTable.
+
+                // Emphasize the selected features by increasing selection halo size.
+//                    featureLayerForTable.setSelectionColorWidth(20);
+//                    featureLayerForTable.setSelectionColor(-16711936);
+
+//                    // Add the feature layer to the map.
+//                    editorActivity.mapView.addLayer(featureLayer);
+
+                // Set up spinners to contain values from the layer to query against.
+//                    setupQuerySpinners();
+
+                // Get the fields that will be used to query the layer.
+                Field typeField = mFeatureTable.getField(ColumnNames.Type);
+//                    Field causeField = featureServiceTable.getField(CAUSE_FIELD_NAME);
+
+                // Retrieve the possible domain values for each field and add to the spinner data adapters.
+                CodedValueDomain damageDomain = (CodedValueDomain) typeField.getDomain();
+
+                try {
+
+                    for (String value : damageDomain.getCodedValues().values()) {
+                        Log.i(TAG, "initFeatureServiceTable(): onCallback(): domain value = " + value);
+                    }
+
+                    // On the main thread, connect up the spinners with the filled data adapters.
+                    editorActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                typesList = new ArrayList<>();
+                                typesList.add(getString(R.string.type));
+
+                                typesList.addAll(damageDomain.getCodedValues().values());
+                                arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
+                                typesSpinner.setAdapter(arrayAdapter);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+//                }else{
+//                    Log.i(TAG, "initFeatureServiceTable(): onCallback(): status = " + arg0);
+//                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+    GeodatabaseFeatureServiceTable mFeatureTable;
 
     public static EditInFeatureFragment newInstance(int featureId, HashMap<String, Object> attributes, AttachmentInfo[] attachmentInfos) {
         EditInFeatureFragment fragment = new EditInFeatureFragment();
@@ -159,6 +251,7 @@ public class EditInFeatureFragment extends Fragment {
                 if (editorActivity.shapeToAdd[0].getGeometry() instanceof Point) {
                     featureLayer = editorActivity.selectedLayer;
                     featureLayerOffline = editorActivity.selectedLayerOffline;
+//                    CodedValueDomain mCodedValueDomain = (CodedValueDomain) featureLayerOffline.getFeatureTable().getField("Type").getDomain();
                     shapeType = MapEditorActivity.POINT;
 //                    try {
 //                        if (((featureLayer.getField(ColumnNames.Type))) != null) {
@@ -175,7 +268,7 @@ public class EditInFeatureFragment extends Fragment {
 //                    } catch (Exception e) {
 //                        e.printStackTrace();
 //                    }
-//
+
 //                    try {
 //                        for (FeatureType type : featureLayer.getTypes()) {
 //                            try {
@@ -215,9 +308,61 @@ public class EditInFeatureFragment extends Fragment {
         Log.i("test", "On Attach");
     }
 
+    private void initFeatureServiceTable(GeodatabaseFeatureServiceTable featureServiceTable) {
+        try {
+
+            if (featureLayerOffline != null && featureLayerOffline.getFeatureTable() != null){
+                Field typeField = featureLayerOffline.getFeatureTable().getField(ColumnNames.Type);
+//                    Field causeField = featureServiceTable.getField(CAUSE_FIELD_NAME);
+
+                // Retrieve the possible domain values for each field and add to the spinner data adapters.
+                CodedValueDomain damageDomain = (CodedValueDomain) typeField.getDomain();
+
+                try {
+
+                    for (String value : damageDomain.getCodedValues().values()) {
+                        Log.i(TAG, "initFeatureServiceTable(): onCallback(): domain value = " + value);
+                    }
+
+                    // On the main thread, connect up the spinners with the filled data adapters.
+                    editorActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                typesList = new ArrayList<>();
+                                typesList.add(getString(R.string.type));
+
+                                typesList.addAll(damageDomain.getCodedValues().keySet());
+                                arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
+                                typesSpinner.setAdapter(arrayAdapter);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+//            mFeatureTable.initialize(mInitFeatureServiceTableListener);
+
+        } catch (
+                Exception e) {
+            e.printStackTrace();
+
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+
+        if (editorActivity != null) {
+            editorActivity.findViewById(R.id.linear_layers_info).setVisibility(View.GONE);
+            editorActivity.findViewById(R.id.rlLatLong).setVisibility(View.GONE);
+            initFeatureServiceTable(mFeatureTable);
+
+        }
     }
 
     private Field[] getFields(Field[] layerFields) {
@@ -446,7 +591,7 @@ public class EditInFeatureFragment extends Fragment {
 
             String pointName;
             try {
-                pointName = String.valueOf(editorActivity.shapeToAdd[0].getAttributes().get("OBJECTID"));
+                pointName = String.valueOf(attributes.get(ColumnNames.ObjectID));
             } catch (Exception e) {
                 e.printStackTrace();
                 pointName = "1"; // TODO Remove
@@ -733,8 +878,21 @@ public class EditInFeatureFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_edit_in_feature, container, false);
-
         try {
+            ButterKnife.bind(this, view);
+
+            try {
+                adapterData = new ArrayList<>();
+                GridLayoutManager mGridLayoutManager = new GridLayoutManager(editorActivity, 2);
+                mOfflineAttachmentRVAdapter = new OfflineAttachmentRVAdapter(adapterData, editorActivity);
+                mOfflineAttachmentsRV.setLayoutManager(mGridLayoutManager);
+                mOfflineAttachmentsRV.setAdapter(mOfflineAttachmentRVAdapter);
+                mOfflineAttachmentsRV.setNestedScrollingEnabled(true);
+
+                mObjectIDTV.setText(String.valueOf(attributes.get(ColumnNames.ObjectID)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             listAdapter.setFeatureSet(attributes);
 
             LinearLayout listView = (LinearLayout) view.findViewById(R.id.list_view);
@@ -745,19 +903,22 @@ public class EditInFeatureFragment extends Fragment {
             mCodeEt = view.findViewById(R.id.mCodeEt);
             mDeviceNumEt = view.findViewById(R.id.device_num);
 
-//            try {
-//                typesSpinner = view.findViewById(R.id.type_spinner);
-//
-//                typesList = new ArrayList<>();
-//
+            try {
+                typesSpinner = view.findViewById(R.id.type_spinner);
+
+//                mFeatureTable = new GeodatabaseFeatureServiceTable(getString(R.string.gcs_feature_server_test), MapEditorActivity.featureServiceToken, (int) featureLayer.getID());
+//                mFeatureTable.setSpatialReference(editorActivity.mapView.getSpatialReference());
+
+                initFeatureServiceTable(mFeatureTable);
 //                typesList.add(getString(R.string.type));
+//
 //                typesList = (ArrayList<String>) types.values();
 //
-//                ArrayAdapter arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
+//                arrayAdapter = new ArrayAdapter<String>(editorActivity, android.R.layout.simple_dropdown_item_1line, typesList);
 //                typesSpinner.setAdapter(arrayAdapter);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
 //            mGeneratedCodeEt = view.findViewById(R.id.generated_code);
 //
@@ -973,7 +1134,7 @@ public class EditInFeatureFragment extends Fragment {
                 } /*else if (mGeneratedCodeEt.getText() == null || mGeneratedCodeEt.getText().toString().trim().isEmpty()) {
                 mGeneratedCodeEt.setError("مطلوب");
             } */ else {
-                    mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), "");
+                    mListener.onSave(listAdapter, mCodeEt.getText().toString().trim(), mDeviceNumEt.getText().toString().trim(), String.valueOf(attributes.get(ColumnNames.ObjectID)));
                 }
             }
         } catch (Exception e) {
@@ -1274,8 +1435,10 @@ public class EditInFeatureFragment extends Fragment {
             if (editorActivity != null) {
 
                 if (Utilities.isNetworkAvailable(editorActivity)) {
-                    Utilities.showFileLoadingDialog(editorActivity);
                     if (editorActivity.onlineData) {
+                        Utilities.showFileLoadingDialog(editorActivity);
+                        mOfflineAttachmentsRV.setVisibility(View.GONE);
+                        hsAttachments.setVisibility(View.VISIBLE);
                         featureLayer.addAttachment(featureId, file, new CallbackListener<FeatureEditResult>() {
                             @Override
                             public void onCallback(final FeatureEditResult featureEditResult) {
@@ -1312,54 +1475,112 @@ public class EditInFeatureFragment extends Fragment {
                         });
 
                     } else {
-                        try {
-                            featureTable.addAttachment(featureId, file, "Service", file.getName(), new CallbackListener<Long>() {
-                                @Override
-                                public void onCallback(final Long aLong) {
-                                    if (aLong != -1) {
-                                        Log.d("Attachment", "Done Add Attachments ");
-                                        if (editorActivity != null) {
-                                            editorActivity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    int attachmentId = aLong.intValue();
-                                                    addAttachmentFileToView(file.getName(), attachmentId, file, true);
-                                                    Utilities.dismissLoadingDialog();
-                                                }
-                                            });
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void onError(Throwable throwable) {
-                                    Log.d("Attachment", "Error In Add Attachments ");
-                                    if (editorActivity != null) {
-
-                                        editorActivity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Utilities.dismissLoadingDialog();
-                                                Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                            Log.d("Attachment", "Error In Add Attachments ");
-                            if (editorActivity != null) {
-                                editorActivity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Utilities.dismissLoadingDialog();
-                                        Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
-                                    }
-                                });
-                            }
-                        }
+//                        try {
+//                            featureTable.addAttachment(featureId, file, "Service", file.getName(), new CallbackListener<Long>() {
+//                                @Override
+//                                public void onCallback(final Long aLong) {
+//                                    if (aLong != -1) {
+//                                        Log.d("Attachment", "Done Add Attachments ");
+//                                        if (editorActivity != null) {
+//                                            editorActivity.runOnUiThread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    int attachmentId = aLong.intValue();
+//                                                    addAttachmentFileToView(file.getName(), attachmentId, file, true);
+//                                                    Utilities.dismissLoadingDialog();
+//                                                }
+//                                            });
+//                                        }
+//                                    }
+//                                }
+//
+//                                @Override
+//                                public void onError(Throwable throwable) {
+//                                    Log.d("Attachment", "Error In Add Attachments ");
+//                                    if (editorActivity != null) {
+//
+//                                        editorActivity.runOnUiThread(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                Utilities.dismissLoadingDialog();
+//                                                Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
+//                                            }
+//                                        });
+//                                    }
+//                                }
+//                            });
+//                        } catch (FileNotFoundException e) {
+//                            e.printStackTrace();
+//                            Log.d("Attachment", "Error In Add Attachments ");
+//                            if (editorActivity != null) {
+//                                editorActivity.runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        Utilities.dismissLoadingDialog();
+//                                        Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
+//                                    }
+//                                });
+//                            }
+//                        }
+                        hsAttachments.setVisibility(View.GONE);
+                        mOfflineAttachmentsRV.setVisibility(View.VISIBLE);
+                        File newFile = compressImage(file.getPath(), editorActivity, "", "");
+                        mOfflineAttachmentRVAdapter.addImageBitmap(newFile);
+                        mOfflineAttachmentRVAdapter.notifyDataSetChanged();
                     }
+                } else {
+//                        try {
+//                            featureTable.addAttachment(featureId, file, "Service", file.getName(), new CallbackListener<Long>() {
+//                                @Override
+//                                public void onCallback(final Long aLong) {
+//                                    if (aLong != -1) {
+//                                        Log.d("Attachment", "Done Add Attachments ");
+//                                        if (editorActivity != null) {
+//                                            editorActivity.runOnUiThread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    int attachmentId = aLong.intValue();
+//                                                    addAttachmentFileToView(file.getName(), attachmentId, file, true);
+//                                                    Utilities.dismissLoadingDialog();
+//                                                }
+//                                            });
+//                                        }
+//                                    }
+//                                }
+//
+//                                @Override
+//                                public void onError(Throwable throwable) {
+//                                    Log.d("Attachment", "Error In Add Attachments ");
+//                                    if (editorActivity != null) {
+//
+//                                        editorActivity.runOnUiThread(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                Utilities.dismissLoadingDialog();
+//                                                Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
+//                                            }
+//                                        });
+//                                    }
+//                                }
+//                            });
+//                        } catch (FileNotFoundException e) {
+//                            e.printStackTrace();
+//                            Log.d("Attachment", "Error In Add Attachments ");
+//                            if (editorActivity != null) {
+//                                editorActivity.runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        Utilities.dismissLoadingDialog();
+//                                        Utilities.showToast(editorActivity, getString(R.string.attachment_offline_error));
+//                                    }
+//                                });
+//                            }
+//                        }
+                    hsAttachments.setVisibility(View.GONE);
+                    mOfflineAttachmentsRV.setVisibility(View.VISIBLE);
+                    File newFile = compressImage(file.getPath(), editorActivity, "", "");
+                    mOfflineAttachmentRVAdapter.addImageBitmap(newFile);
+                    mOfflineAttachmentRVAdapter.notifyDataSetChanged();
                 }
             }
         } catch (Exception e) {
@@ -1578,6 +1799,7 @@ public class EditInFeatureFragment extends Fragment {
         void onSave(AttributeViewsBuilder listAdapter, String code, String deviceID, String GlobalID);
 
         void onDelete(int featureId);
+
     }
 
     private void startRecording() {
@@ -1732,5 +1954,156 @@ public class EditInFeatureFragment extends Fragment {
         }
     }
 
+    public static File compressImage(String filePath, Context context, String imageClassType, String customerCode) {
 
+//        String filePath = getRealPathFromURI(imageUri, context);
+        Bitmap scaledBitmap = null;
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+
+//      by setting this field as true, the actual bitmap pixels are not loaded in the memory. Just the bounds are loaded. If
+//      you try the use the bitmap here, you will get null.
+        options.inJustDecodeBounds = true;
+        Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
+
+        int actualHeight = options.outHeight;
+        int actualWidth = options.outWidth;
+
+//      max Height and width values of the compressed image is taken as 816x612
+        float maxHeight = 816.0f;
+        float maxWidth = 612.0f;
+        float imgRatio = actualWidth / actualHeight;
+        float maxRatio = maxWidth / maxHeight;
+
+//      width and height values are set maintaining the aspect ratio of the image
+        if (actualHeight > maxHeight || actualWidth > maxWidth) {
+            if (imgRatio < maxRatio) {
+                imgRatio = maxHeight / actualHeight;
+                actualWidth = (int) (imgRatio * actualWidth);
+                actualHeight = (int) maxHeight;
+            } else if (imgRatio > maxRatio) {
+                imgRatio = maxWidth / actualWidth;
+                actualHeight = (int) (imgRatio * actualHeight);
+                actualWidth = (int) maxWidth;
+            } else {
+                actualHeight = (int) maxHeight;
+                actualWidth = (int) maxWidth;
+            }
+        }
+
+//      setting inSampleSize value allows to load a scaled down version of the original image
+        options.inSampleSize = calculateInSampleSize(options, actualWidth, actualHeight);
+
+//      inJustDecodeBounds set to false to load the actual bitmap
+        options.inJustDecodeBounds = false;
+
+//      this options allow android to claim the bitmap memory if it runs low on memory
+        options.inPurgeable = true;
+        options.inInputShareable = true;
+        options.inTempStorage = new byte[16 * 1024];
+
+        try {
+//          load the bitmap from its path
+            bmp = BitmapFactory.decodeFile(filePath, options);
+        } catch (OutOfMemoryError exception) {
+            exception.printStackTrace();
+
+        }
+        try {
+            scaledBitmap = Bitmap.createBitmap(actualWidth, actualHeight, Bitmap.Config.ARGB_8888);
+        } catch (OutOfMemoryError exception) {
+            exception.printStackTrace();
+        }
+
+        float ratioX = actualWidth / (float) options.outWidth;
+        float ratioY = actualHeight / (float) options.outHeight;
+        float middleX = actualWidth / 2.0f;
+        float middleY = actualHeight / 2.0f;
+
+        Matrix scaleMatrix = new Matrix();
+        scaleMatrix.setScale(ratioX, ratioY, middleX, middleY);
+        try {
+            Canvas canvas = new Canvas(Objects.requireNonNull(scaledBitmap));
+            canvas.setMatrix(scaleMatrix);
+            canvas.drawBitmap(bmp, middleX - bmp.getWidth() / 2, middleY - bmp.getHeight() / 2, new Paint(Paint.FILTER_BITMAP_FLAG));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//      check the rotation of the image and display it properly
+        ExifInterface exif;
+        try {
+            exif = new ExifInterface(filePath);
+
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION, 0);
+            Log.d("EXIF", "Exif: " + orientation);
+            Matrix matrix = new Matrix();
+            if (orientation == 6) {
+                matrix.postRotate(90);
+                Log.d("EXIF", "Exif: " + orientation);
+            } else if (orientation == 3) {
+                matrix.postRotate(180);
+                Log.d("EXIF", "Exif: " + orientation);
+            } else if (orientation == 8) {
+                matrix.postRotate(270);
+                Log.d("EXIF", "Exif: " + orientation);
+            }
+            scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0,
+                    scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix,
+                    true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        FileOutputStream out = null;
+
+        File file = getImageFile();
+        String filename = getFilename(imageClassType, context, customerCode);
+
+        File mImageFile = new File(file.getPath(), filename);
+
+        try {
+            out = new FileOutputStream(mImageFile);
+
+//          write the compressed bitmap at the destination specified by filename.
+            Objects.requireNonNull(scaledBitmap).compress(Bitmap.CompressFormat.JPEG, 80, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return mImageFile;
+    }
+
+    private static File getImageFile() {
+        final String IMAGES_FOLDER_NAME = "AJC_Collector_COMPRESSED_Images";
+        File mediaStorageDir = null;
+
+        try {
+
+            mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DCIM), IMAGES_FOLDER_NAME);
+
+            if (!mediaStorageDir.exists())
+                mediaStorageDir.mkdir();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return mediaStorageDir;
+    }
+
+    private static String getFilename(String type, Context context, String customerCode) {
+        String uriSting = null;
+
+
+        try {
+            Date d = new Date();
+            uriSting = "Image_" + new SimpleDateFormat("dd_MM_yyyy_HH_mm_ss", Locale.ENGLISH).format(d) + ".png";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return uriSting;
+    }
 }

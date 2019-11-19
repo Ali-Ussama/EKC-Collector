@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 import com.google.android.material.textfield.TextInputLayout;
 
 import util.DataCollectionApplication;

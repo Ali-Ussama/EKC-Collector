@@ -16,7 +16,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 
 import activities.MapEditorActivity;
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 

@@ -59,7 +59,7 @@ import activities.MapEditorActivity;
 import com.esri.core.tasks.tilecache.ExportTileCacheParameters;
 import com.esri.core.tasks.tilecache.ExportTileCacheStatus;
 import com.esri.core.tasks.tilecache.ExportTileCacheTask;
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import util.DataCollectionApplication;
 import util.Utilities;
@@ -151,50 +151,52 @@ public class GeoDatabaseUtil {
     }
 
     public static void finishGoingOnline(final MapEditorActivity activity, final MapView mapView) {
+        try {
+            Log.i(TAG, "Going online ....");
 
-        Log.i(TAG, "Going online ....");
-
-        activity.onlineData = true;
-        activity.menuItemOnline.setVisible(false);
-        activity.menuItemSync.setVisible(false);
-        activity.menuItemOffline.setVisible(true);
-        activity.menuItemIndex.setVisible(true);
+            activity.onlineData = true;
+            activity.menuItemOnline.setVisible(false);
+            activity.menuItemSync.setVisible(false);
+            activity.menuItemOffline.setVisible(true);
+//        activity.menuItemIndex.setVisible(true);
 //       activity.menuItemGCS.setVisible(true);
-        // activity.menuItemSatellite.setVisible(true);
-        // activity.menuItemBaseMap.setVisible(true);
+            // activity.menuItemSatellite.setVisible(true);
+            // activity.menuItemBaseMap.setVisible(true);
 //        activity.menuItemSearch.setVisible(true);
-        activity.item_load_previous_offline.setVisible(false);
+            activity.item_load_previous_offline.setVisible(false);
 
-        if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
-            activity.menuItemLoad.setVisible(false);
-        } else {
-            activity.menuItemLoad.setVisible(true);
+            if (!GeoDatabaseUtil.isGeoDatabaseLocal()) {
+                activity.menuItemLoad.setVisible(false);
+            } else {
+                activity.menuItemLoad.setVisible(true);
+            }
+
+            for (Layer layer : mapView.getLayers()) {
+                if (layer instanceof ArcGISFeatureLayer || layer instanceof ArcGISTiledMapServiceLayer || layer instanceof ArcGISDynamicMapServiceLayer)
+                    mapView.removeLayer(layer);
+            }
+
+            activity.initMapOnlineLayers();
+
+            if (!MapEditorActivity.isInitialized) {
+                activity.mapInitialized();
+            } else {
+                activity.clearAllGraphicLayers();
+                activity.refreshPOI();
+            }
+
+            if (activity.offlineGraphicLayer != null) {
+                activity.offlineGraphicLayer.removeAll();
+            }
+
+            MapEditorActivity.LAYER_SR = SpatialReference.create(MapEditorActivity.SPATIAL_REFERENCE_CODE);
+
+            activity.mapLayersUpdated();
+
+            Log.i(TAG, "Finish Going online");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        for (Layer layer : mapView.getLayers()) {
-            if (layer instanceof ArcGISFeatureLayer || layer instanceof ArcGISTiledMapServiceLayer || layer instanceof ArcGISDynamicMapServiceLayer)
-                mapView.removeLayer(layer);
-        }
-
-        activity.initMapOnlineLayers();
-
-        if (!MapEditorActivity.isInitialized) {
-            activity.mapInitialized();
-        } else {
-            activity.clearAllGraphicLayers();
-            activity.refreshPOI();
-        }
-
-        if (activity.offlineGraphicLayer != null) {
-            activity.offlineGraphicLayer.removeAll();
-        }
-
-        MapEditorActivity.LAYER_SR = SpatialReference.create(MapEditorActivity.SPATIAL_REFERENCE_CODE);
-
-        activity.mapLayersUpdated();
-
-        Log.i(TAG, "Finish Going online");
-
     }
 
     public static void downloadData(final MapEditorActivity activity) {

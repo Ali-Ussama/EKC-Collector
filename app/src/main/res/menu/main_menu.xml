@@ -105,6 +105,7 @@
                 android:icon="@drawable/ic_layers_black_24dp"
                 android:title="@string/menu_go_online_mode"
                 app:showAsAction="never" />
+
             <item
                 android:id="@+id/item_Add_Bookmark"
                 android:icon="@drawable/ic_stars_black_24dp"

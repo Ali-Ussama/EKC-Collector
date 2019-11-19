@@ -66,4 +66,6 @@ public class ColumnNames {
 
 
     public static String GlobalID = "GlobalID";
+
+    public static String ObjectID = "OBJECTID";
 }

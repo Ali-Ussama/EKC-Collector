@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 import data.BookMark;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import util.DataCollectionApplication;
 

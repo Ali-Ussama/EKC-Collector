@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import activities.MapEditorActivity;
 import activities.SplashActivity;

@@ -93,6 +93,8 @@
     <string name="map_not_loaded_yet">الخريطه غير محمله</string>
     <string name="choose_index_to_work">اختر لوحه للعمل عليها</string>
     <string name="enter_index">ادخل رقم اللوحه</string>
+    <string name="menu_go_offline_mode">وضع متصل بالانترنت</string>
+    <string name="menu_go_online_mode">وضع غير متصل بالانترنت</string>
 
 
 </resources>

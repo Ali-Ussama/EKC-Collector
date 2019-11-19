@@ -9,7 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import java.util.ArrayList;
 

@@ -13,7 +13,7 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 public class VideoActivity extends AppCompatActivity implements View.OnClickListener{
 

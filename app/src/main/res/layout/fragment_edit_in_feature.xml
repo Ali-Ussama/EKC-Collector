@@ -25,29 +25,69 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-<!--        <Spinner-->
-<!--            android:id="@+id/type_spinner"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="10dp"-->
-<!--            android:padding="4dp"-->
-<!--            android:prompt="@string/type" />-->
-
-        <EditText
-            android:id="@+id/mCodeEt"
+        <Spinner
+            android:id="@+id/type_spinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:hint="الكود"
-            android:inputType="number" />
+            android:padding="4dp"
+            android:prompt="@string/type" />
 
-        <EditText
-            android:id="@+id/device_num"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="رقم الجهاز"
-            android:inputType="text" />
+            android:layout_margin="8dp"
+            android:background="@drawable/custom_edittext_border_background"
+            android:gravity="center"
+            android:orientation="horizontal">
 
+            <TextView
+                android:id="@+id/object_id_lbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:gravity="center"
+                android:text="@string/object_id" />
+
+            <TextView
+                android:id="@+id/object_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/dummy_objectID" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:background="@drawable/custom_edittext_border_background"
+            android:hint="الكود">
+
+            <EditText
+                android:id="@+id/mCodeEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:background="@drawable/custom_edittext_border_background"
+            android:hint="رقم الجهاز">
+
+            <EditText
+                android:id="@+id/device_num"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
         <!--        <EditText-->
         <!--            android:id="@+id/generated_code"-->
         <!--            android:layout_width="match_parent"-->
@@ -89,6 +129,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal" />
 
+
         </HorizontalScrollView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/offline_attachments_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 </ScrollView>

@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <string name="app_name" translatable="false">AJC Collector</string>
-    <string name="app_package_name" translatable="false">com.gcs.riyadh.fileprovider</string>
+    <string name="app_package_name" translatable="false">com.ekc.collector.fileprovider</string>
     <string name="loading_location">Loading Location…</string>
     <string name="map_not_loaded">Map Not Loaded</string>
     <string name="user_name">User Name</string>
@@ -44,7 +44,7 @@
     <!--    <string name="gcs_feature_server" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer</string>-->
 
     <string name="gcs_feature_server" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/EKC/EKC_Collector/FeatureServer</string>
-    <string name="gcs_feature_server_test" translatable="false"> http://196.218.181.250:6080/arcgis/rest/services/TEST/TEST_EKC/FeatureServer</string>
+    <string name="gcs_feature_server_test" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/TEST/TEST_EKC/FeatureServer</string>
 
 
     <string name="point_feature_layer_services" translatable="false">http://196.218.181.250:6080/arcgis/rest/services/GCS_3857/FeatureServer/0</string>
@@ -163,8 +163,10 @@
     <string name="feature_point_layer" translatable="false">الطبقه النقطية</string>
     <string name="feature_line_layer" translatable="false">الطبقه الخطية</string>
     <string name="feature_area_layer" translatable="false">الطبقه المساحية</string>
-    <string name="menu_go_offline_mode" translatable="false">Go offline mode</string>
-    <string name="menu_go_online_mode" translatable="false">Go online mode</string>
+    <string name="menu_go_offline_mode">Go offline mode</string>
+    <string name="menu_go_online_mode" >Go online mode</string>
     <string name="loading_file" translatable="false">جاري تحميل المف…</string>
-    <string name="type">النوع</string>
+    <string name="type" translatable="false">النوع</string>
+    <string name="object_id" translatable="false">Object ID:</string>
+    <string name="dummy_objectID" translatable="false">123564</string>
 </resources>

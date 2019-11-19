@@ -9,7 +9,7 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import java.lang.ref.WeakReference;
 

@@ -16,7 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

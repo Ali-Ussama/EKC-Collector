@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import adapter.CitiesAdapter;
 import adapter.DistrictsAdapter;
 import data.City;
-import com.gcs.riyadh.R;
+import com.ekc.collector.R;
 import util.CustomAutoComplete;
 import util.DataCollectionApplication;
 import util.Utilities;
