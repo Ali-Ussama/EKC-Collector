@@ -159,6 +159,8 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     public ArcGISDynamicMapServiceLayer gcsMap;
     public ArcGISFeatureLayer pointFeatureLayer, polygonFeatureLayer, lineFeatureLayer, riyadhRectangle, FCL_DISTRIBUTIONBOX, FCL_POLES, FCL_RMU, FCL_Substation, Service_Point, OCL_METER;
 
+    String mapTypeUrl = "http://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer";
+
     public FragmentManager fragmentManager;
     public GraphicsLayer userLocationGraphicLayer, offlineGraphicLayer, workingAreaGraphicLayer, labelsLayer;
     public GraphicsLayer FCL_DISTRIBUTIONBOXGraphicsLayer, FCL_POLESGraphicsLayer, FCL_RMUGraphicsLayer, FCL_SubstationGraphicsLayer, Service_PointGraphicsLayer, OCL_METERGraphicsLayer, pointFeatuersGraphicsLayer, polygonFeatuersGraphicsLayer, lineFeatuersGraphicsLayer;
@@ -2102,9 +2104,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map_editor);
+        try {
+            setContentView(R.layout.activity_map_editor);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+            init();
 
-        init();
     }
 
     private void init() {
@@ -2417,11 +2423,12 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             //TODO Ali Ussama Update
 
             MapOptions mStreetMapOptions = new MapOptions(MapOptions.MapType.STREETS);
+            mapView.setMapOptions(mStreetMapOptions);
 
-            baseMap2 = new ArcGISDynamicMapServiceLayer(getResources().getString(R.string.BaseMap2));
+//            baseMap2 = new ArcGISDynamicMapServiceLayer(getResources().getString(R.string.BaseMap2));
 
 //            mapView.addLayer(baseMap, 0);
-            mapView.addLayer(baseMap2);
+//            mapView.addLayer(baseMap2);
 
 
 //            baseMap.setOpacity(1.0f);
@@ -2449,6 +2456,13 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
             Service_Point = new ArcGISFeatureLayer(getResources().getString(R.string.Service_Point), ArcGISFeatureLayer.MODE.ONDEMAND, featureServiceToken);
             OCL_METER = new ArcGISFeatureLayer(getResources().getString(R.string.OCL_METER), ArcGISFeatureLayer.MODE.ONDEMAND, featureServiceToken);
 
+            try {
+//                ArcGISTiledMapServiceLayer tiledMapServiceLayer = new ArcGISTiledMapServiceLayer(getString(R.string.BaseMap2));
+//                ArcGISTiledMapServiceLayer tiledMapServiceLayer = new ArcGISTiledMapServiceLayer(mapTypeUrl);
+//                mapView.addLayer(tiledMapServiceLayer);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
             mapView.addLayer(FCL_DISTRIBUTIONBOX);
             mapView.addLayer(FCL_POLES);
             mapView.addLayer(FCL_RMU);
@@ -2461,7 +2475,6 @@ public class MapEditorActivity extends AppCompatActivity implements EditInFeatur
 
             Log.i(TAG, "loading label Rectangle");
 
-            mapView.setMapOptions(mStreetMapOptions);
 
             MapUtilites.zoomToExtent(mapView);
 //            mapView.addLayer(riyadhRectangle);

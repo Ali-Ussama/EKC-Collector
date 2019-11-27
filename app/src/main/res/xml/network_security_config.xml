@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">196.218.181.250:6080</domain>
+        <domain includeSubdomains="true">
+            http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer
+        </domain>
         <domain includeSubdomains="true">http://196.218.181.250:6080</domain>
-        <domain includeSubdomains="true">196.218.181.250</domain>
+        <domain includeSubdomains="true">http://196.218.181.250</domain>
         <domain includeSubdomains="true">http://196.218.181.250:6080/arcgis</domain>
     </domain-config>
 </network-security-config>

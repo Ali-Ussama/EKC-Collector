@@ -315,8 +315,14 @@ public class GeoDatabaseUtil {
 
             };
 
+            File file = new File(Environment.getExternalStorageDirectory().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + DataCollectionApplication.getDatabaseNumber());
+            if (!file.exists()) {
+                file.mkdir();
+            }
 //            String databasePath = activity.getFilesDir().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + DataCollectionApplication.getDatabaseNumber() + "/offlinedata.geodatabase";
-            String databasePath = Environment.getExternalStorageDirectory().getPath() + GeoDatabaseUtil.ROOT_GEO_DATABASE_PATH + DataCollectionApplication.getDatabaseNumber() + "/offlinedata.geodatabase";
+            String databasePath = file.getPath() + "/offlinedata.geodatabase";
+            Log.i(TAG, "database file path = " + databasePath);
+
             geodatabaseSyncTask.generateGeodatabase(params, databasePath, false, statusCallback, gdbResponseCallback);
         } catch (Exception e) {
             e.printStackTrace();
